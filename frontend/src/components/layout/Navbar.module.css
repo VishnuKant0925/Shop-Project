@@ -1,0 +1,241 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sticky);
+  padding: var(--space-4) 0;
+  transition: all var(--transition-base);
+}
+
+.header.scrolled {
+  background: rgba(253, 250, 246, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3) 0;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logoIcon {
+  font-size: 2rem;
+  animation: bounce-subtle 3s ease-in-out infinite;
+}
+
+.logoText {
+  display: flex;
+  flex-direction: column;
+}
+
+.logoName {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.logoTagline {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.navLink {
+  position: relative;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 20px;
+  height: 2px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  transition: transform var(--transition-base);
+}
+
+.navLink:hover {
+  color: var(--color-primary);
+}
+
+.navLink:hover::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cartBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  transition: all var(--transition-base);
+  background: transparent;
+}
+
+.cartBtn:hover {
+  background: var(--gradient-card-hover);
+  color: var(--color-primary);
+}
+
+.cartBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  animation: scaleIn var(--transition-spring);
+}
+
+.loginBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: white;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-base);
+  text-decoration: none;
+}
+
+.loginBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.hamburger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-base);
+}
+
+.hamburger.hamburgerOpen span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.hamburgerOpen span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.hamburgerOpen span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+.mobileOnly {
+  display: none;
+}
+
+.mobileOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: -1;
+}
+
+@media (max-width: 768px) {
+  .navLinks {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: var(--space-20) var(--space-6);
+    background: var(--color-bg);
+    box-shadow: var(--shadow-xl);
+    transition: right var(--transition-slow);
+    z-index: var(--z-modal);
+  }
+
+  .navLinks.navLinksOpen {
+    right: 0;
+  }
+
+  .navLink {
+    width: 100%;
+    padding: var(--space-4);
+    font-size: var(--font-size-lg);
+  }
+
+  .mobileOnly {
+    display: block;
+  }
+
+  .loginBtn {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}

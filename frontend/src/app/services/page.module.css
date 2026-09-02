@@ -1,0 +1,317 @@
+.page {
+  padding-bottom: 0;
+}
+
+/* ── Hero ── */
+.hero {
+  position: relative;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--gradient-hero);
+  overflow: hidden;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(232, 87, 29, 0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(245, 166, 35, 0.06) 0%, transparent 50%);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: var(--space-16) 0 var(--space-12);
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--color-secondary);
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.15);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-6);
+}
+
+.heroBadgePulse {
+  width: 8px;
+  height: 8px;
+  background: var(--color-secondary);
+  border-radius: 50%;
+  animation: pulse-glow 2s infinite;
+}
+
+.heroTitle {
+  font-size: var(--font-size-hero);
+  font-weight: 900;
+  color: var(--color-text-inverse);
+  line-height: 1.1;
+  margin-bottom: var(--space-6);
+}
+
+.typingLine {
+  display: inline-block;
+  min-height: 1.2em;
+}
+
+.typingText {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+.typingCursor {
+  display: inline-block;
+  width: 4px;
+  height: 0.9em;
+  background: var(--color-secondary);
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  animation: typing-cursor 0.7s step-end infinite;
+  border-radius: 2px;
+}
+
+.heroSubtitle {
+  font-size: var(--font-size-lg);
+  color: rgba(253, 250, 246, 0.6);
+  max-width: 650px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ── Marquee ── */
+.marqueeWrapper {
+  overflow: hidden;
+  padding: var(--space-5) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.marquee {
+  display: flex;
+  gap: var(--space-10);
+  animation: marquee 25s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-33.33%); }
+}
+
+.marqueeItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: rgba(253, 250, 246, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+
+.marqueeIcon {
+  font-size: 1.2rem;
+}
+
+/* ── Process Steps ── */
+.processSection {
+  background: var(--color-bg);
+}
+
+.processGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+  position: relative;
+}
+
+.processCard {
+  position: relative;
+  text-align: center;
+  padding: var(--space-8) var(--space-5);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  transition: all var(--transition-base);
+}
+
+.processCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(232, 87, 29, 0.15);
+}
+
+.processStep {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  color: white;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+}
+
+.processIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  font-size: 2rem;
+  background: rgba(232, 87, 29, 0.06);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+}
+
+.processCardTitle {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.processCardDesc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.processConnector {
+  display: none;
+}
+
+/* ── Service Cards ── */
+.cardsSection {
+  background: var(--gradient-warm);
+}
+
+.serviceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-8);
+}
+
+/* ── CTA ── */
+.ctaSection {
+  background: var(--color-bg);
+}
+
+.ctaContent {
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.ctaIcon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.ctaTitle {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+  margin-bottom: var(--space-4);
+}
+
+.ctaDesc {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  margin-bottom: var(--space-8);
+}
+
+.ctaActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ctaPrimaryBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: white;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all var(--transition-base);
+}
+
+.ctaPrimaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.ctaSecondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all var(--transition-base);
+}
+
+.ctaSecondaryBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 1024px) {
+  .processGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .serviceGrid {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: var(--font-size-4xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .processGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroTitle {
+    font-size: var(--font-size-3xl);
+  }
+}
