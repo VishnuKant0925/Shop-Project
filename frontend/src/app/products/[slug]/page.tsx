@@ -4,22 +4,33 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { products, formatCurrency } from '@/data';
+import { formatCurrency } from '@/data';
 import { useCart } from '@/context/CartContext';
+import { useProductCatalog } from '@/context/ProductCatalogContext';
 import ProductCard from '@/components/products/ProductCard';
 import styles from './page.module.css';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
+  const { products, isLoading, error } = useProductCatalog();
   const product = products.find((p) => p.slug === slug);
   const { addItem, getItemQuantity, updateQuantity } = useCart();
   const [quantity, setQuantity] = useState(1);
 
+  if (isLoading) {
+    return (
+      <div className={styles.notFound}>
+        <h2>Loading product...</h2>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className={styles.notFound}>
-        <h2>Product not found</h2>
+        <h2>{error ? 'Could not load this product' : 'Product not found'}</h2>
+        {error && <p>{error}</p>}
         <Link href="/products">← Back to Products</Link>
       </div>
     );

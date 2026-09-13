@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { Product, CartItem } from '@/types';
+import { useProductCatalog } from '@/context/ProductCatalogContext';
 
 interface CartState {
   items: CartItem[];
@@ -14,7 +15,8 @@ type CartAction =
   | { type: 'REMOVE_ITEM'; productId: string }
   | { type: 'UPDATE_QUANTITY'; productId: string; quantity: number }
   | { type: 'CLEAR_CART' }
-  | { type: 'LOAD_CART'; items: CartItem[] };
+  | { type: 'LOAD_CART'; items: CartItem[] }
+  | { type: 'SYNC_PRODUCT_DETAILS'; products: Product[] };
 
 interface CartContextType extends CartState {
   addItem: (product: Product, quantity?: number) => void;
@@ -73,6 +75,16 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case 'LOAD_CART':
       newItems = action.items;
       break;
+    case 'SYNC_PRODUCT_DETAILS': {
+      const latestProducts = new Map(action.products.map((product) => [product.id, product]));
+      newItems = state.items.flatMap((item) => {
+        const latestProduct = latestProducts.get(item.product.id);
+        return latestProduct && latestProduct.isActive
+          ? [{ ...item, product: latestProduct }]
+          : [];
+      });
+      break;
+    }
     default:
       return state;
   }
@@ -82,6 +94,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { products } = useProductCatalog();
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     totalItems: 0,
@@ -100,6 +113,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
   }, []);
+
+  // A price or availability update from the catalogue also updates saved cart lines.
+  useEffect(() => {
+    if (products.length > 0) {
+      dispatch({ type: 'SYNC_PRODUCT_DETAILS', products });
+    }
+  }, [products]);
 
   // Save cart to localStorage on change
   useEffect(() => {

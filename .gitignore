@@ -65,6 +65,8 @@ uploads/
 **/uploads/
 tmp/
 temp/
+stitch_assets/
+
 
 # Database dumps / local DB
 *.sqlite

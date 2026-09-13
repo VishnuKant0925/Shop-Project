@@ -37,6 +37,30 @@
   box-shadow: var(--shadow-glow);
 }
 
+.addBtn:disabled,
+.saveBtn:disabled,
+.cancelBtn:disabled,
+.modalClose:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.addBtn:disabled:hover,
+.saveBtn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.formError {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  color: #b91c1c;
+  font-size: var(--font-size-sm);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+}
+
 /* Modal */
 .modalBackdrop {
   position: fixed;
@@ -204,6 +228,16 @@
 
 .tableRow:hover {
   background: rgba(232, 87, 29, 0.02);
+}
+
+.tableMessage {
+  padding: var(--space-8);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.tableMessage p {
+  margin-bottom: var(--space-3);
 }
 
 .productCell {

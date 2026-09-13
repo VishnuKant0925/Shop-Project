@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { products, categories } from '@/data';
 import ProductCard from '@/components/products/ProductCard';
+import { useProductCatalog } from '@/context/ProductCatalogContext';
 import styles from './page.module.css';
 
 export default function ProductsPage() {
+  const { products, categories, isLoading, error, refreshCatalog } = useProductCatalog();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high'>('default');
@@ -92,7 +93,19 @@ export default function ProductsPage() {
 
       {/* Product Grid */}
       <section className={`${styles.productsSection} container`}>
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className={styles.emptyState}>
+            <h3>Loading products...</h3>
+          </div>
+        ) : error ? (
+          <div className={styles.emptyState}>
+            <h3>Could not load products</h3>
+            <p>{error}</p>
+            <button className={styles.categoryBtn} onClick={() => void refreshCatalog()}>
+              Try again
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}>🔍</span>
             <h3>No products found</h3>

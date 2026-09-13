@@ -1,48 +1,59 @@
 /* ===========================
    NEW PANDIT MASALA & TEL MILL
    Design System — globals.css
+   Aligned with Stitch Design
    =========================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-/* ── CSS Custom Properties ── */
+/* ── CSS Custom Properties (Stitch Theme Tokens) ── */
 :root {
-  /* Colors — Indian Spice Palette */
-  --color-primary: #E8571D;
-  --color-primary-light: #FF7A3D;
-  --color-primary-dark: #C44310;
-  --color-secondary: #F5A623;
-  --color-secondary-light: #FFD06B;
-  --color-secondary-dark: #D4880E;
-  --color-accent: #DC2626;
-  --color-accent-light: #FCA5A5;
-  --color-success: #16A34A;
-  --color-warning: #F59E0B;
-  --color-info: #3B82F6;
+  /* Surface Colors */
+  --color-surface: #fcfbf9;
+  --color-surface-dim: #f4f0eb;
+  --color-surface-container-low: #f9f6f0;
+  --color-surface-container: #f1ebe1;
+  --color-surface-container-high: #e8e1d5;
+  --color-surface-container-lowest: #ffffff;
 
-  /* Neutrals */
-  --color-bg: #FDFAF6;
-  --color-bg-warm: #FFF8F0;
-  --color-bg-card: #FFFFFF;
-  --color-bg-dark: #1A1A2E;
-  --color-bg-dark-alt: #16213E;
-  --color-text: #2D2A26;
-  --color-text-muted: #6B6560;
-  --color-text-light: #9A948E;
-  --color-text-inverse: #FDFAF6;
-  --color-border: #E8E0D8;
-  --color-border-light: #F0EBE5;
+  /* Primary (Amber/Mustard) */
+  --color-primary: #b45309;
+  --color-primary-container: #d97706;
+  --color-primary-light: #fef3c7;
+  --color-on-primary: #ffffff;
+
+  /* Secondary (Terracotta/Rust) */
+  --color-secondary: #9a3412;
+  --color-secondary-container: #ea580c;
+  --color-on-secondary: #ffffff;
+
+  /* Text & Surface */
+  --color-on-surface: #1f1d1a;
+  --color-on-surface-variant: #5f5b53;
+
+  /* Borders */
+  --color-outline: #e2ded6;
+  --color-outline-variant: #f0ebe1;
+
+  /* Legacy aliases for backward compat */
+  --color-bg: #fcfbf9;
+  --color-bg-warm: #f9f6f0;
+  --color-bg-card: #ffffff;
+  --color-text: #1f1d1a;
+  --color-text-muted: #5f5b53;
+  --color-text-light: #9a948e;
+  --color-border: #e2ded6;
+  --color-border-light: #f0ebe1;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #E8571D 0%, #F5A623 100%);
-  --gradient-hero: linear-gradient(135deg, #1A1A2E 0%, #2D1810 50%, #1A1A2E 100%);
-  --gradient-warm: linear-gradient(135deg, #FFF8F0 0%, #FDECD2 100%);
-  --gradient-card-hover: linear-gradient(135deg, rgba(232, 87, 29, 0.05) 0%, rgba(245, 166, 35, 0.05) 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  --gradient-primary: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  --gradient-warm: linear-gradient(135deg, #f9f6f0 0%, #f1ebe1 100%);
+  --gradient-card-hover: linear-gradient(135deg, rgba(180, 83, 9, 0.05) 0%, rgba(217, 119, 6, 0.05) 100%);
 
   /* Typography */
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Work Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -74,16 +85,18 @@
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+  --radius-2xl: 1rem;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(45, 42, 38, 0.06), 0 1px 2px rgba(45, 42, 38, 0.04);
-  --shadow-md: 0 4px 12px rgba(45, 42, 38, 0.08), 0 2px 4px rgba(45, 42, 38, 0.04);
-  --shadow-lg: 0 10px 30px rgba(45, 42, 38, 0.1), 0 4px 8px rgba(45, 42, 38, 0.05);
-  --shadow-xl: 0 20px 50px rgba(45, 42, 38, 0.15), 0 8px 16px rgba(45, 42, 38, 0.08);
-  --shadow-glow: 0 0 30px rgba(232, 87, 29, 0.2);
-  --shadow-card: 0 2px 8px rgba(45, 42, 38, 0.06), 0 0 1px rgba(45, 42, 38, 0.1);
-  --shadow-card-hover: 0 12px 36px rgba(232, 87, 29, 0.12), 0 4px 12px rgba(45, 42, 38, 0.06);
+  --shadow-xs: 0 1px 2px rgba(31, 29, 26, 0.05);
+  --shadow-sm: 0 1px 3px rgba(31, 29, 26, 0.06), 0 1px 2px rgba(31, 29, 26, 0.04);
+  --shadow-md: 0 4px 12px rgba(31, 29, 26, 0.08), 0 2px 4px rgba(31, 29, 26, 0.04);
+  --shadow-lg: 0 10px 30px rgba(31, 29, 26, 0.1), 0 4px 8px rgba(31, 29, 26, 0.05);
+  --shadow-xl: 0 20px 50px rgba(31, 29, 26, 0.15), 0 8px 16px rgba(31, 29, 26, 0.08);
+  --shadow-glow: 0 0 30px rgba(180, 83, 9, 0.2);
+  --shadow-card: 0 2px 8px rgba(31, 29, 26, 0.06), 0 0 1px rgba(31, 29, 26, 0.1);
+  --shadow-card-hover: 0 12px 36px rgba(180, 83, 9, 0.12), 0 4px 12px rgba(31, 29, 26, 0.06);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -121,8 +134,8 @@ html {
 body {
   font-family: var(--font-body);
   font-size: var(--font-size-base);
-  color: var(--color-text);
-  background-color: var(--color-bg);
+  color: var(--color-on-surface);
+  background-color: var(--color-surface);
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -131,7 +144,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
-  color: var(--color-text);
+  color: var(--color-on-surface);
 }
 
 a {
@@ -182,7 +195,7 @@ input, textarea, select {
 
 .section-subtitle {
   font-size: var(--font-size-lg);
-  color: var(--color-text-muted);
+  color: var(--color-on-surface-variant);
   text-align: center;
   max-width: 600px;
   margin: 0 auto var(--space-12);
@@ -196,6 +209,12 @@ input, textarea, select {
   letter-spacing: 2px;
   color: var(--color-primary);
   margin-bottom: var(--space-2);
+}
+
+/* ── Material Symbols helpers ── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
 }
 
 /* ── Keyframe Animations ── */
@@ -270,8 +289,8 @@ input, textarea, select {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(232, 87, 29, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(232, 87, 29, 0.4); }
+  0%, 100% { box-shadow: 0 0 20px rgba(180, 83, 9, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(180, 83, 9, 0.4); }
 }
 
 @keyframes spin {
@@ -282,11 +301,6 @@ input, textarea, select {
 @keyframes typing-cursor {
   0%, 100% { border-right-color: var(--color-primary); }
   50% { border-right-color: transparent; }
-}
-
-@keyframes reveal-text {
-  from { max-width: 0; }
-  to { max-width: 100%; }
 }
 
 @keyframes bounce-subtle {
@@ -349,14 +363,6 @@ input, textarea, select {
   border-radius: var(--radius-lg);
 }
 
-.glass-card-dark {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-lg);
-}
-
 /* ── Skeleton Loading ── */
 .skeleton {
   background: linear-gradient(90deg, #f0ebe5 25%, #e8e0d8 50%, #f0ebe5 75%);
@@ -371,22 +377,22 @@ input, textarea, select {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg);
+  background: var(--color-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--color-outline);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-light);
+  background: var(--color-on-surface-variant);
 }
 
 /* ── Selection ── */
 ::selection {
-  background: rgba(232, 87, 29, 0.15);
-  color: var(--color-primary-dark);
+  background: rgba(180, 83, 9, 0.15);
+  color: #78350f;
 }
 
 /* ── Responsive ── */

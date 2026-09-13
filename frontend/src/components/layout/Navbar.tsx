@@ -2,11 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import styles from './Navbar.module.css';
 
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/products', label: 'Store' },
+  { href: '/services', label: 'Services' },
+  { href: '/contact', label: 'Contact' },
+];
+
 export default function Navbar() {
   const { totalItems } = useCart();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -18,43 +30,78 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleLogout = async () => {
+    await logout();
+    setMobileOpen(false);
+    router.push('/');
+  };
+
   return (
     <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
-      <nav className={`${styles.nav} container`}>
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>🌶️</span>
-          <div className={styles.logoText}>
-            <span className={styles.logoName}>New Pandit</span>
-            <span className={styles.logoTagline}>Masala & Tel Mill</span>
+      <div className={styles.headerInner}>
+        {/* Brand Identity */}
+        <Link href="/" className={styles.brand}>
+          <div className={styles.logoBox}>
+            <Image
+              src="/images/logo.jpeg"
+              alt="New Pandit Logo"
+              width={44}
+              height={44}
+              className={styles.logoImg}
+              priority
+            />
+          </div>
+          <div className={styles.brandText}>
+            <span className={styles.brandName}>New Pandit</span>
+            <span className={styles.brandTagline}>Masala &amp; Tel Mill</span>
           </div>
         </Link>
 
-        <ul className={`${styles.navLinks} ${mobileOpen ? styles.navLinksOpen : ''}`}>
-          <li><Link href="/" className={styles.navLink} onClick={() => setMobileOpen(false)}>Home</Link></li>
-          <li><Link href="/products" className={styles.navLink} onClick={() => setMobileOpen(false)}>Products</Link></li>
-          <li><Link href="/services" className={styles.navLink} onClick={() => setMobileOpen(false)}>Services</Link></li>
-          <li><Link href="/contact" className={styles.navLink} onClick={() => setMobileOpen(false)}>Contact</Link></li>
-          <li className={styles.mobileOnly}>
-            <Link href="/auth/login" className={styles.navLink} onClick={() => setMobileOpen(false)}>Login</Link>
-          </li>
-        </ul>
+        {/* Desktop Navigation */}
+        <nav className={styles.desktopNav}>
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={styles.navLink}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
-        <div className={styles.navActions}>
+        {/* Actions */}
+        <div className={styles.actions}>
+          {/* Cart Button */}
           <Link href="/cart" className={styles.cartBtn} aria-label="Shopping Cart">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              shopping_basket
+            </span>
             {totalItems > 0 && (
               <span className={styles.cartBadge}>{totalItems}</span>
             )}
           </Link>
 
-          <Link href="/auth/login" className={styles.loginBtn}>
-            Login
-          </Link>
+          {user ? (
+            <>
+              <span className={styles.userName}>Hi, {user.name.split(' ')[0]}</span>
+              <button type="button" onClick={handleLogout} className={styles.adminBtn}>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-on-surface-variant)' }}>
+                  logout
+                </span>
+                <span>Logout</span>
+              </button>
+            </>
+          ) : (
+            <Link href="/auth/login" className={styles.adminBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-on-surface-variant)' }}>
+                account_circle
+              </span>
+              <span>Login</span>
+            </Link>
+          )}
 
+          {/* Mobile Hamburger */}
           <button
             className={`${styles.hamburger} ${mobileOpen ? styles.hamburgerOpen : ''}`}
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -65,8 +112,40 @@ export default function Navbar() {
             <span></span>
           </button>
         </div>
-      </nav>
+      </div>
 
+      {/* Mobile Navigation Drawer */}
+      <ul className={`${styles.mobileNav} ${mobileOpen ? styles.mobileNavOpen : ''}`}>
+        {navLinks.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className={styles.mobileNavLink}
+              onClick={() => setMobileOpen(false)}
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+        <li className={styles.mobileNavDivider}></li>
+        <li>
+          {user ? (
+            <button className={styles.mobileNavButton} onClick={handleLogout}>
+              Logout ({user.name.split(' ')[0]})
+            </button>
+          ) : (
+            <Link
+              href="/auth/login"
+              className={styles.mobileNavLink}
+              onClick={() => setMobileOpen(false)}
+            >
+              Login
+            </Link>
+          )}
+        </li>
+      </ul>
+
+      {/* Mobile Overlay */}
       {mobileOpen && (
         <div className={styles.mobileOverlay} onClick={() => setMobileOpen(false)} />
       )}

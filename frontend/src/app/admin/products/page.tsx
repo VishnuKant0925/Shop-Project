@@ -2,17 +2,43 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { products as initialProducts, categories, formatCurrency } from '@/data';
+import { formatCurrency } from '@/data';
+import { useProductCatalog } from '@/context/ProductCatalogContext';
+import { api } from '@/lib/api';
 import { Product } from '@/types';
 import styles from './page.module.css';
 
+type ProductForm = {
+  name: string;
+  price: string;
+  unit: Product['unit'];
+  description: string;
+  categoryId: string;
+  stockQuantity: string;
+};
+
+const emptyForm = (categoryId = ''): ProductForm => ({
+  name: '',
+  price: '',
+  unit: 'kg',
+  description: '',
+  categoryId,
+  stockQuantity: '',
+});
+
 export default function AdminProductsPage() {
-  const [productList, setProductList] = useState<Product[]>(initialProducts);
+  const { products: productList, categories, isLoading, error, refreshCatalog } = useProductCatalog();
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [form, setForm] = useState({
-    name: '', price: '', unit: 'kg', description: '', categoryId: 'cat-1', stockQuantity: '',
-  });
+  const [form, setForm] = useState<ProductForm>(emptyForm());
+  const [isSaving, setIsSaving] = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingProduct(null);
+    setActionError('');
+  };
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
@@ -24,41 +50,56 @@ export default function AdminProductsPage() {
       categoryId: product.categoryId,
       stockQuantity: String(product.stockQuantity),
     });
+    setActionError('');
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      setProductList(productList.filter((p) => p.id !== id));
+  const handleCreate = () => {
+    setEditingProduct(null);
+    setForm(emptyForm(categories[0]?.id));
+    setActionError('');
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    setActionError('');
+    try {
+      await api.deleteProduct(id);
+      await refreshCatalog();
+    } catch (nextError: unknown) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Unable to delete this product.');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingProduct) {
-      setProductList(productList.map((p) =>
-        p.id === editingProduct.id
-          ? { ...p, name: form.name, price: Number(form.price), unit: form.unit as Product['unit'], description: form.description, stockQuantity: Number(form.stockQuantity) }
-          : p
-      ));
-    } else {
-      const newProduct: Product = {
-        id: `prod-${Date.now()}`,
-        name: form.name,
-        slug: form.name.toLowerCase().replace(/\s+/g, '-'),
-        price: Number(form.price),
-        unit: form.unit as Product['unit'],
-        description: form.description,
-        categoryId: form.categoryId,
-        stockQuantity: Number(form.stockQuantity),
-        imageUrl: '/images/red-chili-powder.jpg',
-        isActive: true,
-      };
-      setProductList([...productList, newProduct]);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setActionError('');
+    setIsSaving(true);
+
+    const productData: Partial<Product> = {
+      name: form.name,
+      price: Number(form.price),
+      unit: form.unit,
+      description: form.description,
+      categoryId: form.categoryId,
+      stockQuantity: Number(form.stockQuantity),
+    };
+
+    try {
+      if (editingProduct) {
+        await api.updateProduct(editingProduct.id, productData);
+      } else {
+        await api.createProduct(productData);
+      }
+      await refreshCatalog();
+      closeForm();
+    } catch (nextError: unknown) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Unable to save this product.');
+    } finally {
+      setIsSaving(false);
     }
-    setShowForm(false);
-    setEditingProduct(null);
-    setForm({ name: '', price: '', unit: 'kg', description: '', categoryId: 'cat-1', stockQuantity: '' });
   };
 
   return (
@@ -66,66 +107,68 @@ export default function AdminProductsPage() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Products</h1>
-          <p className={styles.subtitle}>Manage your product catalog</p>
+          <p className={styles.subtitle}>Changes are published to the storefront immediately.</p>
         </div>
-        <button className={styles.addBtn} onClick={() => { setShowForm(true); setEditingProduct(null); setForm({ name: '', price: '', unit: 'kg', description: '', categoryId: 'cat-1', stockQuantity: '' }); }}>
+        <button className={styles.addBtn} onClick={handleCreate} disabled={categories.length === 0}>
           + Add Product
         </button>
       </div>
 
-      {/* Product Form Modal */}
+      {actionError && <p className={styles.formError}>{actionError}</p>}
+
       {showForm && (
-        <div className={styles.modalBackdrop} onClick={() => setShowForm(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalBackdrop} onClick={closeForm}>
+          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
-              <button className={styles.modalClose} onClick={() => setShowForm(false)}>×</button>
+              <button className={styles.modalClose} onClick={closeForm} disabled={isSaving}>×</button>
             </div>
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.formRow}>
                 <div className={styles.inputGroup}>
-                  <label>Product Name</label>
-                  <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                  <label htmlFor="product-name">Product Name</label>
+                  <input id="product-name" type="text" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required disabled={isSaving} />
                 </div>
                 <div className={styles.inputGroup}>
-                  <label>Category</label>
-                  <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <label htmlFor="product-category">Category</label>
+                  <select id="product-category" value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value })} required disabled={isSaving}>
+                    {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
                   </select>
                 </div>
               </div>
               <div className={styles.formRow}>
                 <div className={styles.inputGroup}>
-                  <label>Price (₹)</label>
-                  <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+                  <label htmlFor="product-price">Price (₹)</label>
+                  <input id="product-price" type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} required disabled={isSaving} />
                 </div>
                 <div className={styles.inputGroup}>
-                  <label>Unit</label>
-                  <select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
+                  <label htmlFor="product-unit">Unit</label>
+                  <select id="product-unit" value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value as Product['unit'] })} disabled={isSaving}>
                     <option value="kg">kg</option>
                     <option value="litre">litre</option>
                     <option value="packet">packet</option>
                   </select>
                 </div>
                 <div className={styles.inputGroup}>
-                  <label>Stock Quantity</label>
-                  <input type="number" value={form.stockQuantity} onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })} required />
+                  <label htmlFor="product-stock">Stock Quantity</label>
+                  <input id="product-stock" type="number" min="0" value={form.stockQuantity} onChange={(event) => setForm({ ...form, stockQuantity: event.target.value })} required disabled={isSaving} />
                 </div>
               </div>
               <div className={styles.inputGroup}>
-                <label>Description</label>
-                <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <label htmlFor="product-description">Description</label>
+                <textarea id="product-description" rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required disabled={isSaving} />
               </div>
               <div className={styles.formActions}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setShowForm(false)}>Cancel</button>
-                <button type="submit" className={styles.saveBtn}>{editingProduct ? 'Save Changes' : 'Add Product'}</button>
+                <button type="button" className={styles.cancelBtn} onClick={closeForm} disabled={isSaving}>Cancel</button>
+                <button type="submit" className={styles.saveBtn} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : editingProduct ? 'Save Changes' : 'Add Product'}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Products Table */}
       <div className={styles.tableCard}>
         <div className={styles.tableHeader}>
           <span>Product</span>
@@ -134,7 +177,14 @@ export default function AdminProductsPage() {
           <span>Stock</span>
           <span>Actions</span>
         </div>
-        {productList.map((product) => (
+        {isLoading ? (
+          <p className={styles.tableMessage}>Loading products...</p>
+        ) : error ? (
+          <div className={styles.tableMessage}>
+            <p>{error}</p>
+            <button className={styles.editBtn} onClick={() => void refreshCatalog()}>Try again</button>
+          </div>
+        ) : productList.map((product) => (
           <div key={product.id} className={styles.tableRow}>
             <div className={styles.productCell}>
               <Image src={product.imageUrl} alt={product.name} width={48} height={48} className={styles.productThumb} />
@@ -143,12 +193,12 @@ export default function AdminProductsPage() {
                 <small>{product.slug}</small>
               </div>
             </div>
-            <span>{categories.find((c) => c.id === product.categoryId)?.name || '—'}</span>
+            <span>{categories.find((category) => category.id === product.categoryId)?.name || '—'}</span>
             <span className={styles.priceCell}>{formatCurrency(product.price)}/{product.unit}</span>
             <span className={product.stockQuantity < 40 ? styles.lowStock : ''}>{product.stockQuantity} {product.unit}</span>
             <div className={styles.actions}>
               <button className={styles.editBtn} onClick={() => handleEdit(product)}>Edit</button>
-              <button className={styles.deleteBtn} onClick={() => handleDelete(product.id)}>Delete</button>
+              <button className={styles.deleteBtn} onClick={() => void handleDelete(product.id)}>Delete</button>
             </div>
           </div>
         ))}
