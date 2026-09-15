@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ProductCatalogProvider } from '@/context/ProductCatalogContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import OrderNotificationToast from '@/components/notifications/OrderNotification';
 
 export const metadata: Metadata = {
   title: 'New Pandit Masala & Tel Mill — 100% Pure Cold-Pressed & Traditional Chakki',
@@ -19,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -41,6 +42,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
+              <OrderNotificationToast />
             </CartProvider>
           </ProductCatalogProvider>
         </AuthProvider>

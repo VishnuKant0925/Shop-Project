@@ -4,11 +4,23 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/data';
 import styles from './page.module.css';
 
 export default function CartPage() {
-  const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
+  const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart, isLoaded } = useCart();
+  const { user } = useAuth();
+
+  if (!isLoaded) {
+    return (
+      <div className={styles.page}>
+        <div className={`${styles.empty} container`}>
+          <p style={{ color: 'var(--text-muted)' }}>Loading your cart...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -27,6 +39,7 @@ export default function CartPage() {
 
   const tax = totalPrice * 0.05;
   const grandTotal = totalPrice + tax;
+  const checkoutHref = user ? '/checkout' : '/auth/login?redirect=/checkout';
 
   return (
     <div className={styles.page}>
@@ -117,7 +130,7 @@ export default function CartPage() {
             </div>
             <div className={styles.summaryRow}>
               <span>Delivery</span>
-              <span className={styles.freeDelivery}>FREE</span>
+              <span className={styles.freeDelivery}>PICKUP</span>
             </div>
 
             <div className={styles.summaryDivider} />
@@ -127,12 +140,14 @@ export default function CartPage() {
               <span>{formatCurrency(grandTotal)}</span>
             </div>
 
-            <Link href="/auth/login" className={styles.checkoutBtn}>
+            <Link href={checkoutHref} className={styles.checkoutBtn}>
               Proceed to Checkout
             </Link>
 
             <p className={styles.checkoutNote}>
-              You&apos;ll need to login or register to place an order.
+              {user
+                ? 'You\u0027ll pay via UPI QR code on the next step.'
+                : 'You\u0027ll need to login or register to place an order.'}
             </p>
           </div>
         </div>

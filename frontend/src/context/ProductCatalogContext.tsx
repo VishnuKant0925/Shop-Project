@@ -48,7 +48,7 @@ export function ProductCatalogProvider({ children }: { children: React.ReactNode
     }, 0);
 
     const socket = io(getRealtimeUrl(), {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
     });
     const handleProductsChanged = () => {
       void refreshCatalog();

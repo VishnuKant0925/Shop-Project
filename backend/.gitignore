@@ -1,23 +1,46 @@
-# Dependencies
+# ── Dependencies ──
 node_modules/
-/.pnp
+.pnp
 .pnp.*
 
-# Build
+# ── Build Outputs ──
 dist/
 build/
 
-# Environment variables
+# ── Environment Variables & Secrets ──
 .env
 .env.*
 !.env.example
+!.env.*.example
 
-# Logs
+# ── SSL Certificates & Keys ──
+*.pem
+*.key
+*.cert
+*.crt
+
+# ── Logs ──
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# OS Files
+# ── Temporary & Uploads ──
+uploads/
+tmp/
+temp/
+
+# ── Testing & Coverage ──
+coverage/
+.nyc_output/
+
+# ── TypeScript Cache ──
+*.tsbuildinfo
+
+# ── OS & Editor Files ──
 .DS_Store
 Thumbs.db
+[Dd]esktop.ini
+.vscode/
+.idea/

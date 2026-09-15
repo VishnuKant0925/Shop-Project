@@ -46,6 +46,8 @@ export interface User {
   role: 'customer' | 'admin';
 }
 
+export type OrderStatus = 'pending' | 'paid' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -58,7 +60,8 @@ export interface Order {
   subtotal: number;
   tax: number;
   total: number;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: OrderStatus;
+  paymentScreenshotUrl?: string;
   createdAt: string;
 }
 

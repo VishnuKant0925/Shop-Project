@@ -25,6 +25,12 @@ type ApiProduct = Omit<Product, 'id' | 'categoryId'> & {
 
 type ApiCategory = Omit<Category, 'id'> & { id?: string; _id?: string };
 
+type ApiOrder = Omit<Order, 'id' | 'userId'> & {
+  id?: string;
+  _id?: string;
+  user?: string | { id?: string; _id?: string; name?: string; email?: string; phone?: string };
+};
+
 const getErrorMessage = (data: unknown, fallback: string): string => {
   if (typeof data === 'object' && data !== null && 'message' in data) {
     const { message } = data as { message?: unknown };
@@ -62,6 +68,23 @@ const normaliseCategory = (category: ApiCategory): Category => ({
   imageUrl: category.imageUrl,
 });
 
+const normaliseOrder = (order: ApiOrder): Order => ({
+  id: order.id || order._id || '',
+  orderNumber: order.orderNumber,
+  userId: typeof order.user === 'string' ? order.user : (order.user?.id || order.user?._id || ''),
+  customerName: order.customerName,
+  customerEmail: order.customerEmail,
+  customerPhone: order.customerPhone,
+  shippingAddress: order.shippingAddress,
+  items: order.items,
+  subtotal: order.subtotal,
+  tax: order.tax,
+  total: order.total,
+  status: order.status,
+  paymentScreenshotUrl: order.paymentScreenshotUrl,
+  createdAt: order.createdAt,
+});
+
 class ApiClient {
   private baseUrl: string;
 
@@ -80,6 +103,13 @@ class ApiClient {
       }
     }
     return headers;
+  }
+
+  private getAuthToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pandit_token');
+    }
+    return null;
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -237,36 +267,53 @@ class ApiClient {
 
   // Orders
   async createOrder(orderData: {
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string;
-    shippingAddress: string;
     items: { productId: string; productName: string; quantity: number; unitPrice: number }[];
+    notes?: string;
   }): Promise<Order> {
-    const res = await this.request<DataResponse<Order>>('/orders', {
+    const res = await this.request<DataResponse<ApiOrder>>('/orders', {
       method: 'POST',
       body: JSON.stringify(orderData),
     });
-    return res.data;
+    return normaliseOrder(res.data);
+  }
+
+  async uploadPaymentScreenshot(orderId: string, file: File): Promise<Order> {
+    const formData = new FormData();
+    formData.append('screenshot', file);
+
+    const url = `${this.baseUrl}/orders/${orderId}/payment-screenshot`;
+    const headers: HeadersInit = {};
+    const token = this.getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(url, { method: 'POST', headers, body: formData });
+    const data: unknown = await response.json();
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to upload payment proof.'));
+    return normaliseOrder((data as DataResponse<ApiOrder>).data);
+  }
+
+  async getOrder(id: string): Promise<Order> {
+    const res = await this.request<DataResponse<ApiOrder>>(`/orders/${id}`);
+    return normaliseOrder(res.data);
   }
 
   async getMyOrders(): Promise<Order[]> {
-    const res = await this.request<DataResponse<Order[]>>('/orders/my');
-    return res.data;
+    const res = await this.request<DataResponse<ApiOrder[]>>('/orders/my');
+    return res.data.map(normaliseOrder);
   }
 
   async getAllOrders(status?: string): Promise<Order[]> {
     const query = status && status !== 'all' ? `?status=${status}` : '';
-    const res = await this.request<DataResponse<Order[]>>(`/orders${query}`);
-    return res.data;
+    const res = await this.request<DataResponse<ApiOrder[]>>(`/orders${query}`);
+    return res.data.map(normaliseOrder);
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order> {
-    const res = await this.request<DataResponse<Order>>(`/orders/${id}/status`, {
+    const res = await this.request<DataResponse<ApiOrder>>(`/orders/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     });
-    return res.data;
+    return normaliseOrder(res.data);
   }
 
   // Callbacks / Inquiries

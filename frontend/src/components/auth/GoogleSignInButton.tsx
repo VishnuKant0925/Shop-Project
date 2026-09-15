@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface GoogleSignInButtonProps {
   onCredential: (credential: string) => Promise<void>;
@@ -33,6 +33,14 @@ export default function GoogleSignInButton({ onCredential, onError }: GoogleSign
   const [isReady, setIsReady] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
+  // Keep stable refs so the useEffect doesn't re-run when callbacks change
+  const onCredentialRef = useRef(onCredential);
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onCredentialRef.current = onCredential; }, [onCredential]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
+
+  const handleError = useCallback((msg: string) => onErrorRef.current(msg), []);
+
   useEffect(() => {
     if (!clientId || !buttonRef.current) return;
 
@@ -42,10 +50,10 @@ export default function GoogleSignInButton({ onCredential, onError }: GoogleSign
         client_id: clientId,
         callback: async ({ credential }) => {
           if (!credential) {
-            onError('Google did not return a sign-in credential. Please try again.');
+            onErrorRef.current('Google did not return a sign-in credential. Please try again.');
             return;
           }
-          await onCredential(credential);
+          await onCredentialRef.current(credential);
         },
       });
       buttonRef.current.replaceChildren();
@@ -70,10 +78,10 @@ export default function GoogleSignInButton({ onCredential, onError }: GoogleSign
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.onload = renderGoogleButton;
-    script.onerror = () => onError('Google sign-in could not be loaded. Please try another login method.');
+    script.onerror = () => handleError('Google sign-in could not be loaded. Please try another login method.');
     document.head.appendChild(script);
     return () => script.removeEventListener('load', renderGoogleButton);
-  }, [clientId, onCredential, onError]);
+  }, [clientId, handleError]);
 
   if (!clientId) {
     return <p className="googleConfigurationHint">Google sign-in is not configured yet.</p>;

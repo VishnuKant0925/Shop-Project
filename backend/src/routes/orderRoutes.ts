@@ -5,12 +5,15 @@ import {
   getAllOrders,
   getOrderById,
   updateOrderStatus,
+  uploadPaymentScreenshot,
+  screenshotUpload,
 } from '../controllers/orderController';
-import { authenticate, requireAdmin, optionalAuth } from '../middleware/auth';
+import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
-router.post('/', optionalAuth, createOrder);
+router.post('/', authenticate, createOrder);
+router.post('/:id/payment-screenshot', authenticate, screenshotUpload, uploadPaymentScreenshot);
 router.get('/my', authenticate, getMyOrders);
 router.get('/', authenticate, requireAdmin, getAllOrders);
 router.get('/:id', authenticate, getOrderById);

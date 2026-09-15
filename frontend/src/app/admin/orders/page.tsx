@@ -1,43 +1,92 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api';
+import { Order, OrderStatus } from '@/types';
 import { formatCurrency } from '@/data';
 import styles from './page.module.css';
 
-const mockOrders = [
-  { id: 'ORD-001', customer: 'Rahul Sharma', email: 'rahul@email.com', phone: '+91 99887 76655', items: 3, total: 1260, status: 'delivered', date: '2024-12-01', address: '123 Main St, Delhi' },
-  { id: 'ORD-002', customer: 'Priya Patel', email: 'priya@email.com', phone: '+91 88776 65544', items: 2, total: 840, status: 'processing', date: '2024-12-02', address: '456 MG Road, Mumbai' },
-  { id: 'ORD-003', customer: 'Amit Kumar', email: 'amit@email.com', phone: '+91 77665 54433', items: 5, total: 2100, status: 'confirmed', date: '2024-12-02', address: '789 Park Ave, Pune' },
-  { id: 'ORD-004', customer: 'Sneha Gupta', email: 'sneha@email.com', phone: '+91 66554 43322', items: 1, total: 560, status: 'pending', date: '2024-12-03', address: '101 Ring Road, Jaipur' },
-  { id: 'ORD-005', customer: 'Vikash Singh', email: 'vikash@email.com', phone: '+91 55443 32211', items: 4, total: 1680, status: 'shipped', date: '2024-12-03', address: '202 Station Rd, Lucknow' },
-];
-
-const statusOptions = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+const statusOptions: OrderStatus[] = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled'];
 const statusColors: Record<string, string> = {
-  pending: '#F59E0B', confirmed: '#3B82F6', processing: '#8B5CF6',
-  shipped: '#06B6D4', delivered: '#16A34A', cancelled: '#DC2626',
+  pending: '#F59E0B', paid: '#3B82F6', preparing: '#8B5CF6',
+  ready: '#16A34A', completed: '#6B7280', cancelled: '#DC2626',
+};
+const statusLabels: Record<string, string> = {
+  pending: 'Pending Payment', paid: 'Paid — Review', preparing: 'Preparing',
+  ready: 'Ready for Pickup', completed: 'Completed', cancelled: 'Cancelled',
+};
+
+const actionForStatus: Record<string, { label: string; next: OrderStatus; color: string } | null> = {
+  paid: { label: 'Start Preparing', next: 'preparing', color: '#8B5CF6' },
+  preparing: { label: 'Mark Ready for Pickup', next: 'ready', color: '#16A34A' },
+  ready: { label: 'Mark Completed', next: 'completed', color: '#6B7280' },
+  pending: null,
+  completed: null,
+  cancelled: null,
 };
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState('');
+  const [actionLoading, setActionLoading] = useState('');
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const data = await api.getAllOrders();
+      setOrders(data);
+    } catch (err) {
+      console.error('Failed to load orders', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const filteredOrders = filterStatus === 'all' ? orders : orders.filter((o) => o.status === filterStatus);
 
-  const updateStatus = (orderId: string, newStatus: string) => {
-    setOrders(orders.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    setActionLoading(orderId);
+    try {
+      const updated = await api.updateOrderStatus(orderId, newStatus);
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+    } catch (err) {
+      console.error('Failed to update status', err);
+    } finally {
+      setActionLoading('');
+    }
   };
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) +
+      ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.loadingWrap}><span className={styles.spinner} /></div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Orders</h1>
-          <p className={styles.subtitle}>Manage and track all customer orders</p>
+          <p className={styles.subtitle}>Manage customer orders, verify payments &amp; fulfil pickups</p>
         </div>
+        <button className={styles.refreshBtn} onClick={fetchOrders} title="Refresh orders">
+          🔄
+        </button>
       </div>
 
-      {/* Status Filter */}
+      {/* Status Filters */}
       <div className={styles.filters}>
         <button className={`${styles.filterBtn} ${filterStatus === 'all' ? styles.filterBtnActive : ''}`} onClick={() => setFilterStatus('all')}>
           All ({orders.length})
@@ -49,47 +98,124 @@ export default function AdminOrdersPage() {
             onClick={() => setFilterStatus(s)}
             style={filterStatus === s ? { background: `${statusColors[s]}15`, color: statusColors[s], borderColor: `${statusColors[s]}30` } : {}}
           >
-            {s.charAt(0).toUpperCase() + s.slice(1)} ({orders.filter((o) => o.status === s).length})
+            {statusLabels[s]} ({orders.filter((o) => o.status === s).length})
           </button>
         ))}
       </div>
 
-      {/* Orders Table */}
-      <div className={styles.tableCard}>
-        <div className={styles.tableHeader}>
-          <span>Order ID</span>
-          <span>Customer</span>
-          <span>Items</span>
-          <span>Total</span>
-          <span>Status</span>
-          <span>Date</span>
-          <span>Action</span>
+      {/* Orders */}
+      {filteredOrders.length === 0 ? (
+        <div className={styles.emptyState}>
+          <span>📦</span>
+          <p>No orders {filterStatus !== 'all' ? `with status "${statusLabels[filterStatus]}"` : 'yet'}</p>
         </div>
-        {filteredOrders.map((order) => (
-          <div key={order.id} className={styles.tableRow}>
-            <span className={styles.orderId}>{order.id}</span>
-            <div className={styles.customerCell}>
-              <strong>{order.customer}</strong>
-              <small>{order.phone}</small>
-            </div>
-            <span>{order.items}</span>
-            <span className={styles.totalCell}>{formatCurrency(order.total)}</span>
-            <span>
-              <span className={styles.statusBadge} style={{ background: `${statusColors[order.status]}12`, color: statusColors[order.status] }}>
-                {order.status}
-              </span>
-            </span>
-            <span className={styles.dateCell}>{order.date}</span>
-            <select
-              value={order.status}
-              onChange={(e) => updateStatus(order.id, e.target.value)}
-              className={styles.statusSelect}
-            >
-              {statusOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-        ))}
-      </div>
+      ) : (
+        <div className={styles.ordersList}>
+          {filteredOrders.map((order) => {
+            const expanded = expandedId === order.id;
+            const action = actionForStatus[order.status];
+            return (
+              <div key={order.id} className={`${styles.orderCard} ${expanded ? styles.orderCardExpanded : ''}`}>
+                {/* Header Row */}
+                <div className={styles.orderHeader} onClick={() => setExpandedId(expanded ? null : order.id)}>
+                  <div className={styles.orderIdCol}>
+                    <span className={styles.orderNum}>{order.orderNumber}</span>
+                    <span className={styles.orderDate}>{formatDate(order.createdAt)}</span>
+                  </div>
+                  <div className={styles.customerCol}>
+                    <strong>{order.customerName}</strong>
+                    <span>{order.customerPhone || order.customerEmail}</span>
+                  </div>
+                  <div className={styles.itemsCol}>{order.items.length} item{order.items.length > 1 ? 's' : ''}</div>
+                  <div className={styles.totalCol}>{formatCurrency(order.total)}</div>
+                  <span className={styles.statusBadge} style={{ background: `${statusColors[order.status]}12`, color: statusColors[order.status] }}>
+                    {statusLabels[order.status]}
+                  </span>
+                  <span className={`${styles.chevron} ${expanded ? styles.chevronOpen : ''}`}>▾</span>
+                </div>
+
+                {/* Expanded Details */}
+                {expanded && (
+                  <div className={styles.orderDetails}>
+                    {/* Items */}
+                    <div className={styles.detailSection}>
+                      <h4>Order Items</h4>
+                      <div className={styles.itemsTable}>
+                        {order.items.map((item, i) => (
+                          <div key={i} className={styles.detailItem}>
+                            <span>{item.productName}</span>
+                            <span className={styles.detailItemQty}>{item.quantity} × {formatCurrency(item.unitPrice)}</span>
+                            <span className={styles.detailItemTotal}>{formatCurrency(item.totalPrice)}</span>
+                          </div>
+                        ))}
+                        <div className={styles.detailTotals}>
+                          <div><span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span></div>
+                          <div><span>GST (5%)</span><span>{formatCurrency(order.tax)}</span></div>
+                          <div className={styles.detailGrand}><span>Total</span><span>{formatCurrency(order.total)}</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Screenshot */}
+                    <div className={styles.detailSection}>
+                      <h4>Payment Proof</h4>
+                      {order.paymentScreenshotUrl ? (
+                        <div className={styles.screenshotWrap} onClick={() => setLightboxUrl(order.paymentScreenshotUrl || '')}>
+                          <img src={order.paymentScreenshotUrl} alt="Payment screenshot" className={styles.screenshotThumb} />
+                          <span className={styles.screenshotHint}>Click to enlarge</span>
+                        </div>
+                      ) : (
+                        <p className={styles.noScreenshot}>No payment screenshot uploaded yet.</p>
+                      )}
+                    </div>
+
+                    {/* Customer Info */}
+                    <div className={styles.detailSection}>
+                      <h4>Customer</h4>
+                      <div className={styles.customerInfo}>
+                        <div><span>Name</span><span>{order.customerName}</span></div>
+                        <div><span>Email</span><span>{order.customerEmail}</span></div>
+                        <div><span>Phone</span><span>{order.customerPhone || '—'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className={styles.orderActions}>
+                      {action && (
+                        <button
+                          className={styles.actionBtn}
+                          style={{ background: action.color }}
+                          disabled={actionLoading === order.id}
+                          onClick={() => handleStatusChange(order.id, action.next)}
+                        >
+                          {actionLoading === order.id ? '...' : action.label}
+                        </button>
+                      )}
+                      {order.status !== 'cancelled' && order.status !== 'completed' && (
+                        <button
+                          className={styles.cancelBtn}
+                          disabled={actionLoading === order.id}
+                          onClick={() => handleStatusChange(order.id, 'cancelled')}
+                        >
+                          Cancel Order
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div className={styles.lightbox} onClick={() => setLightboxUrl('')}>
+          <button className={styles.lightboxClose} onClick={() => setLightboxUrl('')}>✕</button>
+          <img src={lightboxUrl} alt="Payment screenshot full view" className={styles.lightboxImg} />
+        </div>
+      )}
     </div>
   );
 }

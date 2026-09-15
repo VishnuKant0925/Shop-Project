@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -16,8 +17,15 @@ import { errorHandler } from './middleware/errorHandler';
 export const createApp = (): Application => {
   const app = express();
 
-  // Security and HTTP headers
-  app.use(helmet());
+  // Security and HTTP headers (permits cross-origin loading of images like screenshots)
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  );
+
+  // Serve static files from uploads folder
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // CORS configuration
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';

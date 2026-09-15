@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useState } from 'react';
 import { Product, CartItem } from '@/types';
 import { useProductCatalog } from '@/context/ProductCatalogContext';
 
@@ -19,6 +19,7 @@ type CartAction =
   | { type: 'SYNC_PRODUCT_DETAILS'; products: Product[] };
 
 interface CartContextType extends CartState {
+  isLoaded: boolean;
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -44,7 +45,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_ITEM': {
       const existingIndex = state.items.findIndex(
-        (item) => item.product.id === action.product.id
+        (item) => item.product.id === action.product.id || (item.product.slug && item.product.slug === action.product.slug)
       );
       if (existingIndex >= 0) {
         newItems = state.items.map((item, idx) =>
@@ -58,14 +59,20 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       break;
     }
     case 'REMOVE_ITEM':
-      newItems = state.items.filter((item) => item.product.id !== action.productId);
+      newItems = state.items.filter(
+        (item) => item.product.id !== action.productId && item.product.slug !== action.productId
+      );
       break;
     case 'UPDATE_QUANTITY':
       if (action.quantity <= 0) {
-        newItems = state.items.filter((item) => item.product.id !== action.productId);
+        newItems = state.items.filter(
+          (item) => item.product.id !== action.productId && item.product.slug !== action.productId
+        );
       } else {
         newItems = state.items.map((item) =>
-          item.product.id === action.productId ? { ...item, quantity: action.quantity } : item
+          item.product.id === action.productId || item.product.slug === action.productId
+            ? { ...item, quantity: action.quantity }
+            : item
         );
       }
       break;
@@ -76,13 +83,34 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       newItems = action.items;
       break;
     case 'SYNC_PRODUCT_DETAILS': {
-      const latestProducts = new Map(action.products.map((product) => [product.id, product]));
-      newItems = state.items.flatMap((item) => {
-        const latestProduct = latestProducts.get(item.product.id);
-        return latestProduct && latestProduct.isActive
-          ? [{ ...item, product: latestProduct }]
-          : [];
-      });
+      if (!action.products || action.products.length === 0) {
+        return state;
+      }
+      const latestById = new Map(action.products.map((product) => [product.id, product]));
+      const latestBySlug = new Map(action.products.map((product) => [product.slug, product]));
+
+      newItems = state.items
+        .map((item) => {
+          const latestProduct =
+            latestById.get(item.product.id) ||
+            (item.product.slug ? latestBySlug.get(item.product.slug) : undefined);
+
+          if (!latestProduct) {
+            // Retain existing item if not in current catalog batch
+            return item;
+          }
+          if (latestProduct.isActive === false) {
+            return null;
+          }
+          return {
+            ...item,
+            product: {
+              ...item.product,
+              ...latestProduct,
+            },
+          };
+        })
+        .filter(Boolean) as CartItem[];
       break;
     }
     default:
@@ -100,35 +128,41 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     totalItems: 0,
     totalPrice: 0,
   });
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load cart from localStorage on mount
+  // 1. Load cart from localStorage on mount
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
         const items = JSON.parse(savedCart) as CartItem[];
-        dispatch({ type: 'LOAD_CART', items });
+        if (Array.isArray(items) && items.length > 0) {
+          dispatch({ type: 'LOAD_CART', items });
+        }
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error('Failed to parse saved cart:', e);
+    } finally {
+      setIsLoaded(true);
     }
   }, []);
 
-  // A price or availability update from the catalogue also updates saved cart lines.
+  // 2. Safely sync price or availability updates once cart is loaded
   useEffect(() => {
-    if (products.length > 0) {
+    if (isLoaded && products.length > 0) {
       dispatch({ type: 'SYNC_PRODUCT_DETAILS', products });
     }
-  }, [products]);
+  }, [isLoaded, products]);
 
-  // Save cart to localStorage on change
+  // 3. Save cart to localStorage ONLY AFTER initial load has finished
   useEffect(() => {
+    if (!isLoaded) return;
     try {
       localStorage.setItem('cart', JSON.stringify(state.items));
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error('Failed to save cart:', e);
     }
-  }, [state.items]);
+  }, [isLoaded, state.items]);
 
   const addItem = useCallback((product: Product, quantity?: number) => {
     dispatch({ type: 'ADD_ITEM', product, quantity });
@@ -148,7 +182,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const getItemQuantity = useCallback(
     (productId: string) => {
-      const item = state.items.find((i) => i.product.id === productId);
+      const item = state.items.find((i) => i.product.id === productId || i.product.slug === productId);
       return item?.quantity || 0;
     },
     [state.items]
@@ -156,7 +190,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ ...state, addItem, removeItem, updateQuantity, clearCart, getItemQuantity }}
+      value={{ ...state, isLoaded, addItem, removeItem, updateQuantity, clearCart, getItemQuantity }}
     >
       {children}
     </CartContext.Provider>

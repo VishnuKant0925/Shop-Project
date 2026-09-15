@@ -142,6 +142,7 @@ export default function HomePage() {
                 src="/images/mustard-oil.jpg"
                 alt="Pure Mill Products"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className={styles.gatewayCardImg}
               />
               <div className={styles.gatewayCardBadges}>
@@ -202,6 +203,7 @@ export default function HomePage() {
                 src="/images/flour-milling.jpg"
                 alt="Milling Services"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className={styles.gatewayCardImg}
               />
               <div className={styles.gatewayCardBadges}>
@@ -331,6 +333,7 @@ export default function HomePage() {
                 src="/images/mustard-oil.jpg"
                 alt="Cold pressed mustard oil"
                 fill
+                sizes="(max-width: 768px) 100vw, 33vw"
                 className={styles.calcImg}
               />
             </div>
@@ -339,6 +342,7 @@ export default function HomePage() {
                 src="/images/red-chili-powder.jpg"
                 alt="Stone ground chillies"
                 fill
+                sizes="(max-width: 768px) 100vw, 33vw"
                 className={styles.calcImg}
               />
             </div>

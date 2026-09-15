@@ -8,6 +8,8 @@ export interface IOrderItem {
   totalPrice: number;
 }
 
+export type OrderStatus = 'pending' | 'paid' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+
 export interface IOrder extends Document {
   orderNumber: string;
   user?: Types.ObjectId;
@@ -19,7 +21,8 @@ export interface IOrder extends Document {
   subtotal: number;
   tax: number;
   total: number;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: OrderStatus;
+  paymentScreenshotUrl: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,12 +63,12 @@ const OrderSchema = new Schema<IOrder>(
     },
     customerPhone: {
       type: String,
-      required: [true, 'Customer phone is required'],
+      default: '',
       trim: true,
     },
     shippingAddress: {
       type: String,
-      required: [true, 'Shipping address is required'],
+      default: 'Pickup from shop',
       trim: true,
     },
     items: {
@@ -93,8 +96,12 @@ const OrderSchema = new Schema<IOrder>(
     },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+      enum: ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled'],
       default: 'pending',
+    },
+    paymentScreenshotUrl: {
+      type: String,
+      default: '',
     },
   },
   {

@@ -1,0 +1,624 @@
+.page {
+  padding: var(--space-8) 0 var(--space-16);
+  min-height: 80vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+
+/* ── Progress Steps ── */
+.progress {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+  position: relative;
+}
+
+.progress::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 40px;
+  right: 40px;
+  height: 2px;
+  background: var(--color-border);
+  z-index: 0;
+}
+
+.progressStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  position: relative;
+  z-index: 1;
+}
+
+.progressDot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all var(--transition-base);
+}
+
+.progressStepActive .progressDot {
+  background: var(--gradient-primary);
+  border-color: var(--color-primary);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(180, 83, 9, 0.15);
+}
+
+.progressStepDone .progressDot {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: white;
+}
+
+.progressLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.progressStepActive .progressLabel { color: var(--color-primary); }
+.progressStepDone .progressLabel { color: #16a34a; }
+
+/* ── Step Card ── */
+.stepCard {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-md);
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.stepIcon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.stepTitle {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 900;
+  margin-bottom: var(--space-1);
+}
+
+.stepSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* ── Error Banner ── */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  color: #b91c1c;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+/* ── Order Items (Step 1) ── */
+.orderItems {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--color-border-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--space-6);
+}
+
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-card);
+}
+
+.orderItemInfo strong {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.orderItemMeta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.orderItemTotal {
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Totals Card ── */
+.totalsCard {
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.totalDivider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-2) 0;
+}
+
+.totalRowGrand {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--color-text);
+  padding-top: var(--space-3);
+}
+
+/* ── Buttons ── */
+.primaryBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-4);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: white;
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  text-align: center;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.backLink, .backBtn {
+  display: block;
+  text-align: center;
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.backLink:hover, .backBtn:hover { text-decoration: underline; }
+
+/* ── QR Section (Step 2) ── */
+.qrSection {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.qrCard {
+  background: white;
+  border: 2px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.qrAmount {
+  margin-bottom: var(--space-5);
+}
+
+.qrAmountLabel {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.qrAmountValue {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 900;
+  color: var(--color-primary);
+}
+
+.qrImageWrap {
+  display: inline-block;
+  padding: var(--space-3);
+  background: white;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.qrImage {
+  display: block;
+  width: 220px;
+  height: 220px;
+}
+
+.upiInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.upiLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.upiId {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  background: var(--color-surface-container-low);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  user-select: all;
+}
+
+.paymentInstructions {
+  padding-top: var(--space-2);
+}
+
+.paymentInstructions h3 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+}
+
+.paymentInstructions ol {
+  list-style: decimal;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: var(--space-6);
+}
+
+.paymentInstructions ol strong {
+  color: var(--color-text);
+}
+
+.securityNote {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: #16a34a;
+  font-weight: 600;
+  background: #f0fdf4;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+/* ── Drop Zone (Step 3) ── */
+.dropZone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-10);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  margin-bottom: var(--space-4);
+  background: var(--color-surface-container-lowest);
+}
+
+.dropZone:hover, .dropZoneDragging {
+  border-color: var(--color-primary);
+  background: rgba(180, 83, 9, 0.03);
+}
+
+.dropZoneHasFile {
+  padding: var(--space-4);
+  border-style: solid;
+  border-color: var(--color-primary);
+}
+
+.fileInput {
+  display: none;
+}
+
+.dropContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.uploadIcon {
+  color: var(--color-text-light);
+}
+
+.dropText {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+
+.dropSubtext {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+}
+
+.previewWrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.previewImg {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
+.previewOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-md);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  color: white;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.previewWrap:hover .previewOverlay {
+  opacity: 1;
+}
+
+.fileName {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+
+/* ── Confirmed (Step 4) ── */
+.confirmedCard {
+  text-align: center;
+}
+
+.successIcon {
+  font-size: 4rem;
+  margin-bottom: var(--space-4);
+  animation: bounceIn 0.5s ease-out;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.successTitle {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 900;
+  margin-bottom: var(--space-2);
+}
+
+.successSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  max-width: 440px;
+  margin: 0 auto var(--space-8);
+  line-height: 1.6;
+}
+
+.successSubtitle strong {
+  color: var(--color-primary);
+}
+
+.confirmationDetails {
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-8);
+  text-align: left;
+}
+
+.confirmRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) 0;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.confirmRow:last-child { border-bottom: none; }
+
+.confirmRow span:first-child {
+  color: var(--color-text-muted);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+}
+
+.nextSteps {
+  text-align: left;
+  margin-bottom: var(--space-8);
+}
+
+.nextSteps h3 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  text-align: center;
+}
+
+.nextStepsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.nextStep {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.nextStepNum {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: 50%;
+}
+
+.nextStep strong {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.nextStep p {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: center;
+}
+
+.confirmActions .primaryBtn {
+  max-width: 300px;
+}
+
+/* ── Spinner ── */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .qrSection {
+    grid-template-columns: 1fr;
+  }
+
+  .qrCard {
+    order: -1;
+  }
+
+  .stepCard {
+    padding: var(--space-6);
+  }
+
+  .qrImage {
+    width: 200px;
+    height: 200px;
+  }
+
+  .progressLabel {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .stepCard {
+    padding: var(--space-4);
+  }
+
+  .stepTitle {
+    font-size: var(--font-size-xl);
+  }
+}

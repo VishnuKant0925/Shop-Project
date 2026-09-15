@@ -1,9 +1,9 @@
 # ==========================================
 # Root .gitignore for Shop-Project
-# Covers frontend (Next.js) & backend (Node/Express/MongoDB)
+# Covers Frontend (Next.js), Backend (Node/Express/MongoDB), and Deployment
 # ==========================================
 
-# Dependencies
+# ── Dependencies ──
 node_modules/
 **/node_modules/
 .pnp
@@ -13,8 +13,9 @@ node_modules/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+.pnpm-store/
 
-# Build outputs
+# ── Build & Distribution Outputs ──
 .next/
 **/.next/
 out/
@@ -23,56 +24,67 @@ build/
 **/build/
 dist/
 **/dist/
+.turbo/
+**/.turbo/
 
-# Environment variables & secrets (keep examples committed)
+# ── Environment Variables & Secrets ──
 .env
-.env*.local
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 **/.env
-**/.env*.local
+**/.env.*
 !**/.env.example
+!**/.env.*.example
 
-# Certificates and keys
+# ── SSL Certificates & Secret Keys ──
 *.pem
 *.key
 *.cert
+*.crt
+*.pfx
+*.p12
 
-# Logs & debugging
+# ── Logs & Debugging ──
 *.log
+**/*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# Testing & coverage
+# ── Testing & Code Coverage ──
 coverage/
 **/coverage/
 .nyc_output/
 
-# TypeScript cache
+# ── TypeScript Cache & Declarations ──
 *.tsbuildinfo
+**/*.tsbuildinfo
 next-env.d.ts
 **/next-env.d.ts
 
-# Deployment & cloud
+# ── Deployment & Cloud Providers ──
 .vercel/
+**/.vercel/
 
-# Uploaded files & temporary storage
+# ── Uploads, Media & Temporary Storage ──
 uploads/
 **/uploads/
 tmp/
+**/tmp/
 temp/
+**/temp/
 stitch_assets/
+**/stitch_assets/
 
-
-# Database dumps / local DB
+# ── Database Dumps & Local DBs ──
 *.sqlite
+*.sqlite3
 *.db
+*.db-journal
 
-# Operating System files
+# ── Operating System Files ──
 .DS_Store
 .DS_Store?
 ._*
@@ -80,11 +92,17 @@ stitch_assets/
 .Trashes
 ehthumbs.db
 Thumbs.db
+**/Thumbs.db
+**/ehthumbs.db
 [Dd]esktop.ini
+**/[Dd]esktop.ini
+*.tmp
 
-# IDE & Editor files
+# ── IDEs, Editors & AI Workspaces ──
 .idea/
+**/.idea/
 .vscode/
+**/.vscode/
 *.suo
 *.ntvs*
 *.njsproj
@@ -92,3 +110,11 @@ Thumbs.db
 *.sw?
 *.sublime-workspace
 *.sublime-project
+.gemini/
+**/.gemini/
+.agents/
+**/.agents/
+.claude/
+**/.claude/
+.cursor/
+**/.cursor/
