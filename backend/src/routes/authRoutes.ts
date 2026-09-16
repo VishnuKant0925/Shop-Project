@@ -7,6 +7,7 @@ import {
   verifyOtp,
   logout,
   getMe,
+  updateProfile,
 } from '../controllers/authController';
 import { authenticate } from '../middleware/auth';
 
@@ -19,5 +20,6 @@ router.post('/otp/request', requestOtp);
 router.post('/otp/verify', verifyOtp);
 router.post('/logout', authenticate, logout);
 router.get('/me', authenticate, getMe);
+router.put('/profile', authenticate, updateProfile);
 
 export default router;

@@ -1,33 +1,89 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { products, services, formatCurrency } from '@/data';
+import { api, DashboardStats } from '@/lib/api';
 import styles from './page.module.css';
 
-const recentOrders = [
-  { id: 'ORD-001', customer: 'Rahul Sharma', total: 1260, status: 'delivered', date: '2 hours ago' },
-  { id: 'ORD-002', customer: 'Priya Patel', total: 840, status: 'processing', date: '5 hours ago' },
-  { id: 'ORD-003', customer: 'Amit Kumar', total: 2100, status: 'confirmed', date: '1 day ago' },
-  { id: 'ORD-004', customer: 'Sneha Gupta', total: 560, status: 'pending', date: '1 day ago' },
-  { id: 'ORD-005', customer: 'Vikash Singh', total: 1680, status: 'shipped', date: '2 days ago' },
-];
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
 const statusColors: Record<string, string> = {
   pending: '#F59E0B',
-  confirmed: '#3B82F6',
-  processing: '#8B5CF6',
-  shipped: '#06B6D4',
-  delivered: '#16A34A',
+  paid: '#3B82F6',
+  preparing: '#8B5CF6',
+  ready: '#16A34A',
+  completed: '#6B7280',
   cancelled: '#DC2626',
 };
 
 export default function AdminDashboard() {
-  const stats = [
-    { icon: '💰', label: 'Revenue', value: '₹1,24,500', change: '+12.5%', positive: true },
-    { icon: '📦', label: 'Orders', value: '148', change: '+8.2%', positive: true },
-    { icon: '🛍️', label: 'Products', value: String(products.length), change: '', positive: true },
-    { icon: '⚙️', label: 'Services', value: String(services.length), change: '', positive: true },
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const data = await api.getDashboardStats();
+      setStats(data);
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const formatTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.dashboard}>
+        <div className={styles.loadingWrap}>
+          <div className={styles.spinner} />
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.dashboard}>
+        <div className={styles.errorWrap}>
+          <p>{error}</p>
+          <button onClick={fetchStats} className={styles.retryBtn}>Try Again</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  const statCards = [
+    { icon: '💰', label: 'Revenue', value: formatCurrency(stats.totalRevenue), change: stats.revenueChange, positive: !stats.revenueChange.startsWith('-') },
+    { icon: '📦', label: 'Orders', value: String(stats.totalOrders), change: stats.ordersChange, positive: !stats.ordersChange.startsWith('-') },
+    { icon: '🛍️', label: 'Products', value: String(stats.totalProducts), change: '', positive: true },
+    { icon: '⚙️', label: 'Services', value: String(stats.totalServices), change: '', positive: true },
   ];
 
   return (
@@ -39,7 +95,7 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className={styles.statsGrid}>
-        {stats.map((stat, idx) => (
+        {statCards.map((stat, idx) => (
           <div key={idx} className={styles.statCard}>
             <div className={styles.statIcon}>{stat.icon}</div>
             <div className={styles.statInfo}>
@@ -71,22 +127,26 @@ export default function AdminDashboard() {
               <span>Status</span>
               <span>Time</span>
             </div>
-            {recentOrders.map((order) => (
-              <div key={order.id} className={styles.tableRow}>
-                <span className={styles.orderId}>{order.id}</span>
-                <span>{order.customer}</span>
-                <span className={styles.orderTotal}>{formatCurrency(order.total)}</span>
-                <span>
-                  <span
-                    className={styles.statusBadge}
-                    style={{ background: `${statusColors[order.status]}15`, color: statusColors[order.status] }}
-                  >
-                    {order.status}
+            {stats.recentOrders.length === 0 ? (
+              <div className={styles.emptyRow}>No orders yet</div>
+            ) : (
+              stats.recentOrders.map((order) => (
+                <div key={order.id} className={styles.tableRow}>
+                  <span className={styles.orderId}>{order.orderNumber}</span>
+                  <span>{order.customerName}</span>
+                  <span className={styles.orderTotal}>{formatCurrency(order.total)}</span>
+                  <span>
+                    <span
+                      className={styles.statusBadge}
+                      style={{ background: `${statusColors[order.status] || '#6B7280'}15`, color: statusColors[order.status] || '#6B7280' }}
+                    >
+                      {order.status}
+                    </span>
                   </span>
-                </span>
-                <span className={styles.orderTime}>{order.date}</span>
-              </div>
-            ))}
+                  <span className={styles.orderTime}>{formatTimeAgo(order.createdAt)}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -107,16 +167,18 @@ export default function AdminDashboard() {
 
           <div className={styles.inventoryCard}>
             <h3 className={styles.panelTitle}>Inventory Alert</h3>
-            {products
-              .filter((p) => p.stockQuantity < 40)
-              .map((p) => (
+            {stats.lowStockProducts.length === 0 ? (
+              <p className={styles.noAlerts}>All products are well stocked! ✅</p>
+            ) : (
+              stats.lowStockProducts.map((p) => (
                 <div key={p.id} className={styles.inventoryItem}>
                   <span>{p.name}</span>
                   <span className={styles.stockCount}>
                     {p.stockQuantity} {p.unit}
                   </span>
                 </div>
-              ))}
+              ))
+            )}
           </div>
         </div>
       </div>

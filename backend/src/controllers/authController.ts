@@ -290,7 +290,56 @@ export const getMe = async (
       return;
     }
 
-    res.status(200).json({ success: true, user: userResponse(req.user) });
+  res.status(200).json({ success: true, user: userResponse(req.user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Not authorized' });
+      return;
+    }
+
+    const { name, phone, password } = req.body;
+
+    if (name !== undefined) {
+      const trimmedName = String(name).trim();
+      if (trimmedName.length === 0 || trimmedName.length > 60) {
+        res.status(400).json({ success: false, message: 'Name must be between 1 and 60 characters.' });
+        return;
+      }
+      req.user.name = trimmedName;
+    }
+
+    if (phone !== undefined) {
+      req.user.phone = String(phone).trim();
+    }
+
+    if (password !== undefined) {
+      const pwd = String(password);
+      if (pwd.length < 6) {
+        res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+        return;
+      }
+      req.user.password = pwd;
+    }
+
+    await req.user.save();
+
+    // Also update the session token so the stored user data is fresh
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      token: generateToken(req.user),
+      user: userResponse(req.user),
+    });
   } catch (error) {
     next(error);
   }

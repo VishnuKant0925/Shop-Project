@@ -12,6 +12,9 @@ import serviceRoutes from './routes/serviceRoutes';
 import orderRoutes from './routes/orderRoutes';
 import callbackRoutes from './routes/callbackRoutes';
 import healthRoutes from './routes/healthRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import statsRoutes from './routes/statsRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 export const createApp = (): Application => {
@@ -64,6 +67,9 @@ export const createApp = (): Application => {
   app.use('/api/services', serviceRoutes);
   app.use('/api/orders', orderRoutes);
   app.use('/api/callbacks', callbackRoutes);
+  app.use('/api/notifications', notificationRoutes);
+  app.use('/api/stats', statsRoutes);
+  app.use('/api/upload', uploadRoutes);
 
   // 404 Route Handler
   app.use((_req: Request, res: Response) => {

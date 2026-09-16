@@ -2,10 +2,12 @@ import { Response, NextFunction } from 'express';
 import multer from 'multer';
 import { Order, IOrderItem } from '../models/Order';
 import { Product } from '../models/Product';
+import { User } from '../models/User';
+import { Notification } from '../models/Notification';
 import { AuthRequest } from '../middleware/auth';
 import { uploadPaymentFile } from '../config/cloudinary';
 import { sendOrderReadyEmail } from '../services/emailService';
-import { emitOrderStatusChanged } from '../realtime';
+import { emitOrderStatusChanged, emitNewNotification, emitAdminNotification } from '../realtime';
 
 /* ── Multer (memory storage for Cloudinary) ── */
 export const screenshotUpload = multer({
@@ -82,6 +84,34 @@ export const createOrder = async (
       total,
       status: 'pending',
     });
+
+    // Notify all admin users about the new order
+    try {
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      const adminNotifications = admins.map((admin) => ({
+        user: admin._id,
+        type: 'new_order' as const,
+        title: 'New Order Received',
+        message: `New order ${order.orderNumber} from ${req.user!.name} — ₹${order.total}`,
+        data: { orderId: order.id, orderNumber: order.orderNumber },
+      }));
+      if (adminNotifications.length > 0) {
+        const created = await Notification.insertMany(adminNotifications);
+        // Emit to admin room
+        if (created.length > 0) {
+          const n = created[0];
+          emitAdminNotification({
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            message: n.message,
+            createdAt: n.createdAt,
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.error('[Notification] Failed to notify admins about new order:', notifErr);
+    }
 
     res.status(201).json({ success: true, message: 'Order placed successfully', data: order });
   } catch (error) {
@@ -241,19 +271,51 @@ export const updateOrderStatus = async (
       return;
     }
 
-    // When admin marks as "ready", notify the customer via email + socket
-    if (status === 'ready' && order.user) {
+    // Notify the customer about every status change via socket + persistent notification
+    if (order.user) {
       const userId = String(order.user);
       emitOrderStatusChanged(userId, {
         orderId: order.id,
         orderNumber: order.orderNumber,
-        status: 'ready',
+        status,
       });
 
-      // Fire-and-forget email — don't block the response
-      sendOrderReadyEmail(order.customerEmail, order.orderNumber, order.total).catch((err) =>
-        console.error('[Email] Failed to send order-ready notification:', err.message)
-      );
+      // Create persistent notification for the customer
+      const statusLabels: Record<string, string> = {
+        paid: 'Payment Confirmed',
+        preparing: 'Order Being Prepared',
+        ready: 'Order Ready for Pickup',
+        completed: 'Order Completed',
+        cancelled: 'Order Cancelled',
+      };
+      const statusLabel = statusLabels[status] || `Status: ${status}`;
+
+      try {
+        const notif = await Notification.create({
+          user: order.user,
+          type: status === 'ready' ? 'order_ready' : 'order_status_changed',
+          title: statusLabel,
+          message: `Your order #${order.orderNumber} has been updated to: ${statusLabel}`,
+          data: { orderId: order.id, orderNumber: order.orderNumber, status },
+        });
+
+        emitNewNotification(userId, {
+          id: notif.id,
+          type: notif.type,
+          title: notif.title,
+          message: notif.message,
+          createdAt: notif.createdAt,
+        });
+      } catch (notifErr) {
+        console.error('[Notification] Failed to create status notification:', notifErr);
+      }
+
+      // When admin marks as "ready", also send email
+      if (status === 'ready') {
+        sendOrderReadyEmail(order.customerEmail, order.orderNumber, order.total).catch((err) =>
+          console.error('[Email] Failed to send order-ready notification:', err.message)
+        );
+      }
     }
 
     res.status(200).json({ success: true, data: order });

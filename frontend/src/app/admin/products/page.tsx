@@ -2,11 +2,19 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { formatCurrency } from '@/data';
 import { useProductCatalog } from '@/context/ProductCatalogContext';
 import { api } from '@/lib/api';
 import { Product } from '@/types';
 import styles from './page.module.css';
+
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
 type ProductForm = {
   name: string;
@@ -15,6 +23,7 @@ type ProductForm = {
   description: string;
   categoryId: string;
   stockQuantity: string;
+  badge: string;
 };
 
 const emptyForm = (categoryId = ''): ProductForm => ({
@@ -24,6 +33,7 @@ const emptyForm = (categoryId = ''): ProductForm => ({
   description: '',
   categoryId,
   stockQuantity: '',
+  badge: '',
 });
 
 export default function AdminProductsPage() {
@@ -33,11 +43,16 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState<ProductForm>(emptyForm());
   const [isSaving, setIsSaving] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const closeForm = () => {
     setShowForm(false);
     setEditingProduct(null);
     setActionError('');
+    setImageFile(null);
+    setImagePreview('');
   };
 
   const handleEdit = (product: Product) => {
@@ -49,7 +64,10 @@ export default function AdminProductsPage() {
       description: product.description,
       categoryId: product.categoryId,
       stockQuantity: String(product.stockQuantity),
+      badge: product.badge || '',
     });
+    setImagePreview(product.imageUrl);
+    setImageFile(null);
     setActionError('');
     setShowForm(true);
   };
@@ -57,6 +75,8 @@ export default function AdminProductsPage() {
   const handleCreate = () => {
     setEditingProduct(null);
     setForm(emptyForm(categories[0]?.id));
+    setImageFile(null);
+    setImagePreview('');
     setActionError('');
     setShowForm(true);
   };
@@ -73,10 +93,34 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setActionError('');
     setIsSaving(true);
+
+    let imageUrl: string | undefined;
+
+    // Upload image if selected
+    if (imageFile) {
+      setIsUploading(true);
+      try {
+        imageUrl = await api.uploadImage(imageFile, 'products');
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'Failed to upload image.');
+        setIsSaving(false);
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
 
     const productData: Partial<Product> = {
       name: form.name,
@@ -85,6 +129,8 @@ export default function AdminProductsPage() {
       description: form.description,
       categoryId: form.categoryId,
       stockQuantity: Number(form.stockQuantity),
+      badge: form.badge || undefined,
+      ...(imageUrl ? { imageUrl } : {}),
     };
 
     try {
@@ -154,14 +200,29 @@ export default function AdminProductsPage() {
                   <input id="product-stock" type="number" min="0" value={form.stockQuantity} onChange={(event) => setForm({ ...form, stockQuantity: event.target.value })} required disabled={isSaving} />
                 </div>
               </div>
+              <div className={styles.formRow}>
+                <div className={styles.inputGroup}>
+                  <label htmlFor="product-badge">Badge (optional)</label>
+                  <input id="product-badge" type="text" placeholder="e.g. Bestseller, Pure" value={form.badge} onChange={(event) => setForm({ ...form, badge: event.target.value })} disabled={isSaving} />
+                </div>
+              </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="product-description">Description</label>
                 <textarea id="product-description" rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required disabled={isSaving} />
               </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="product-image">Product Image</label>
+                <input id="product-image" type="file" accept="image/*" onChange={handleImageChange} disabled={isSaving} />
+                {imagePreview && (
+                  <div className={styles.imagePreview}>
+                    <img src={imagePreview} alt="Preview" />
+                  </div>
+                )}
+              </div>
               <div className={styles.formActions}>
                 <button type="button" className={styles.cancelBtn} onClick={closeForm} disabled={isSaving}>Cancel</button>
                 <button type="submit" className={styles.saveBtn} disabled={isSaving}>
-                  {isSaving ? 'Saving...' : editingProduct ? 'Save Changes' : 'Add Product'}
+                  {isUploading ? 'Uploading image...' : isSaving ? 'Saving...' : editingProduct ? 'Save Changes' : 'Add Product'}
                 </button>
               </div>
             </form>

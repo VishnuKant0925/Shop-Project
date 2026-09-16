@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import styles from './layout.module.css';
 
 const navItems = [
@@ -14,7 +15,43 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Show loading state while auth is resolving
+  if (isLoading) {
+    return (
+      <div className={styles.adminLayout}>
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner} />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect non-authenticated users to login
+  if (!user) {
+    if (typeof window !== 'undefined') {
+      router.push('/auth/login');
+    }
+    return null;
+  }
+
+  // Show access denied for non-admin users
+  if (user.role !== 'admin') {
+    return (
+      <div className={styles.adminLayout}>
+        <div className={styles.accessDenied}>
+          <span className={styles.accessDeniedIcon}>🔒</span>
+          <h2>Access Denied</h2>
+          <p>You don&apos;t have administrator privileges to access this panel.</p>
+          <Link href="/" className={styles.backHomeBtn}>Go Back Home</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.adminLayout}>
@@ -60,7 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ☰
           </button>
           <div className={styles.topBarRight}>
-            <span className={styles.adminBadge}>👤 Admin</span>
+            <span className={styles.adminBadge}>👤 {user.name.split(' ')[0]}</span>
           </div>
         </header>
 

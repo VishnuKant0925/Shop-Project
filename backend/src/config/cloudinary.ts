@@ -69,4 +69,36 @@ export const uploadPaymentFile = async (
   return localUrl;
 };
 
+/**
+ * Upload a generic image buffer to Cloudinary.
+ * Used for product images, service images, etc.
+ * Returns the Cloudinary secure_url.
+ */
+export const uploadImageFile = async (
+  buffer: Buffer,
+  folder: string
+): Promise<string> => {
+  const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'image',
+        quality: 'auto',
+        fetch_format: 'auto',
+      },
+      (error, res) => {
+        if (error || !res) return reject(error ?? new Error('Cloudinary upload failed'));
+        resolve(res);
+      }
+    );
+    stream.end(buffer);
+  });
+
+  if (result && result.secure_url) {
+    return result.secure_url;
+  }
+
+  throw new Error('Cloudinary upload did not return a URL');
+};
+
 export default cloudinary;

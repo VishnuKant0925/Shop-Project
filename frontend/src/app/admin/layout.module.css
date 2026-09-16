@@ -149,6 +149,76 @@
   display: none;
 }
 
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  gap: var(--space-4);
+  color: var(--color-text-muted);
+  width: 100%;
+}
+
+.loadingSpinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-outline);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: adminSpin 0.8s linear infinite;
+}
+
+@keyframes adminSpin {
+  to { transform: rotate(360deg); }
+}
+
+.accessDenied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  gap: var(--space-3);
+  width: 100%;
+  text-align: center;
+  padding: var(--space-6);
+}
+
+.accessDeniedIcon {
+  font-size: 3rem;
+  margin-bottom: var(--space-2);
+}
+
+.accessDenied h2 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--color-on-surface);
+}
+
+.accessDenied p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  max-width: 400px;
+}
+
+.backHomeBtn {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: white;
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.backHomeBtn:hover {
+  opacity: 0.9;
+}
+
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);

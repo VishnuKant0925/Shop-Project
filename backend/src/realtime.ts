@@ -21,6 +21,11 @@ export const initialiseRealtime = (server: HttpServer): SocketServer => {
         socket.join(`user:${userId}`);
       }
     });
+
+    // Admin clients join the admin room to receive new order notifications.
+    socket.on('join-admin', () => {
+      socket.join('admin');
+    });
   });
 
   return io;
@@ -36,4 +41,19 @@ export const emitOrderStatusChanged = (
   data: { orderId: string; orderNumber: string; status: string }
 ): void => {
   io?.to(`user:${userId}`).emit('order:status-changed', data);
+};
+
+/** Notify a specific user about a new notification. */
+export const emitNewNotification = (
+  userId: string,
+  notification: { id: string; type: string; title: string; message: string; createdAt: Date }
+): void => {
+  io?.to(`user:${userId}`).emit('notification:new', notification);
+};
+
+/** Notify all admins about a new notification (e.g. new order placed). */
+export const emitAdminNotification = (
+  notification: { id: string; type: string; title: string; message: string; createdAt: Date }
+): void => {
+  io?.to('admin').emit('notification:new', notification);
 };

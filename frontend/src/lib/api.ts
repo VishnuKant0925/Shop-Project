@@ -31,6 +31,42 @@ type ApiOrder = Omit<Order, 'id' | 'userId'> & {
   user?: string | { id?: string; _id?: string; name?: string; email?: string; phone?: string };
 };
 
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  data?: Record<string, unknown>;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface DashboardStats {
+  totalRevenue: number;
+  totalOrders: number;
+  totalProducts: number;
+  totalServices: number;
+  totalUsers: number;
+  revenueChange: string;
+  ordersChange: string;
+  statusBreakdown: Record<string, number>;
+  recentOrders: {
+    id: string;
+    orderNumber: string;
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    status: string;
+    createdAt: string;
+  }[];
+  lowStockProducts: {
+    id: string;
+    name: string;
+    stockQuantity: number;
+    unit: string;
+  }[];
+}
+
 const getErrorMessage = (data: unknown, fallback: string): string => {
   if (typeof data === 'object' && data !== null && 'message' in data) {
     const { message } = data as { message?: unknown };
@@ -133,6 +169,18 @@ class ApiClient {
     return data as T;
   }
 
+  private async requestWithFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const headers: HeadersInit = {};
+    const token = this.getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(url, { method: 'POST', headers, body: formData });
+    const data: unknown = await response.json();
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Upload failed'));
+    return data as T;
+  }
+
   // Health
   async checkHealth(): Promise<ApiResponse> {
     return this.request<ApiResponse>('/health');
@@ -185,6 +233,15 @@ class ApiClient {
   async getCurrentUser(): Promise<User> {
     const res = await this.request<{ success: boolean; user: User }>('/auth/me');
     return res.user;
+  }
+
+  async updateProfile(data: { name?: string; phone?: string; password?: string }): Promise<{ token: string; user: User }> {
+    const res = await this.request<AuthResponse>('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    this.saveSession(res);
+    return res;
   }
 
   async logout(): Promise<void> {
@@ -265,6 +322,28 @@ class ApiClient {
     return res.data;
   }
 
+  async createService(serviceData: Partial<Service>): Promise<Service> {
+    const res = await this.request<DataResponse<Service>>('/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+    return res.data;
+  }
+
+  async updateService(id: string, serviceData: Partial<Service>): Promise<Service> {
+    const res = await this.request<DataResponse<Service>>(`/services/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(serviceData),
+    });
+    return res.data;
+  }
+
+  async deleteService(id: string): Promise<void> {
+    await this.request<ApiResponse>(`/services/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Orders
   async createOrder(orderData: {
     items: { productId: string; productName: string; quantity: number; unitPrice: number }[];
@@ -322,6 +401,39 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  // Notifications
+  async getNotifications(page = 1, limit = 20): Promise<{ data: Notification[]; pagination: { page: number; total: number; pages: number } }> {
+    return this.request(`/notifications?page=${page}&limit=${limit}`);
+  }
+
+  async getUnreadCount(): Promise<number> {
+    const res = await this.request<{ success: boolean; count: number }>('/notifications/unread-count');
+    return res.count;
+  }
+
+  async markNotificationRead(id: string): Promise<void> {
+    await this.request(`/notifications/${id}/read`, { method: 'PATCH' });
+  }
+
+  async markAllNotificationsRead(): Promise<void> {
+    await this.request('/notifications/read-all', { method: 'PATCH' });
+  }
+
+  // Image Upload
+  async uploadImage(file: File, folder: string): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+    const res = await this.requestWithFormData<{ success: boolean; url: string }>('/upload/image', formData);
+    return res.url;
+  }
+
+  // Dashboard Stats (Admin)
+  async getDashboardStats(): Promise<DashboardStats> {
+    const res = await this.request<DataResponse<DashboardStats>>('/stats/dashboard');
+    return res.data;
   }
 }
 
