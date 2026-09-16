@@ -3,6 +3,7 @@ import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { corsOriginDelegate } from './config/cors';
 
 // Route imports
 import authRoutes from './routes/authRoutes';
@@ -31,17 +32,10 @@ export const createApp = (): Application => {
   // Serve static files from uploads folder
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-  // CORS configuration
-  const rawOrigins = process.env.CLIENT_URL || 'http://localhost:3000';
-  const allowedOrigins = rawOrigins
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .concat(['http://localhost:3000', 'http://127.0.0.1:3000']);
-
+  // CORS configuration (supports newpanditmasala.shop, Vercel deployments, CLIENT_URL, localhost)
   app.use(
     cors({
-      origin: allowedOrigins,
+      origin: corsOriginDelegate,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],

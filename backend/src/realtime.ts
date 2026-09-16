@@ -1,19 +1,13 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
+import { corsOriginDelegate } from './config/cors';
 
 let io: SocketServer | undefined;
 
 export const initialiseRealtime = (server: HttpServer): SocketServer => {
-  const rawOrigins = process.env.CLIENT_URL || 'http://localhost:3000';
-  const allowedOrigins = rawOrigins
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .concat(['http://localhost:3000', 'http://127.0.0.1:3000']);
-
   io = new SocketServer(server, {
     cors: {
-      origin: allowedOrigins,
+      origin: corsOriginDelegate,
       methods: ['GET', 'POST'],
       credentials: true,
     },
