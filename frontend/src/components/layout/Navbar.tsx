@@ -17,7 +17,7 @@ const navLinks = [
   { href: '/contact', label: 'Contact' },
 ];
 
-const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
+const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
 export default function Navbar() {
   const { totalItems } = useCart();

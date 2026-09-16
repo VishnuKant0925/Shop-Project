@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
         hostname: 'res.cloudinary.com',
       },
       {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.onrender.com',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
         port: '5000',

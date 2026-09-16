@@ -111,7 +111,12 @@ export const sendPromotionalEmail = async (
   }
 
   const transporter = createTransporter();
-  const ctaUrl = options.ctaUrl || process.env.CLIENT_URL || 'http://localhost:3000';
+  const rawClientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const primaryClientUrl = rawClientUrl.split(',')[0].trim();
+  let ctaUrl = options.ctaUrl || primaryClientUrl;
+  if (ctaUrl.startsWith('/')) {
+    ctaUrl = `${primaryClientUrl.replace(/\/$/, '')}${ctaUrl}`;
+  }
   const ctaText = options.ctaText || 'Shop Pure Products →';
   const greeting = options.customerName ? `Dear ${options.customerName},` : 'Valued Customer,';
 

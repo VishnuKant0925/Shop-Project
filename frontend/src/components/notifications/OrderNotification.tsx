@@ -10,7 +10,7 @@ interface OrderNotification {
   status: string;
 }
 
-const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
+const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
 export default function OrderNotificationToast() {
   const { user } = useAuth();

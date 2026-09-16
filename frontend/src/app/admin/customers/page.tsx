@@ -55,7 +55,7 @@ const emailPresets = [
     discountText: '15% Flat Discount on orders above ₹499',
     message: `Dear Valued Patron,\n\nWe are delighted to introduce our seasonal festive discount scheme. Every batch of our Kachi Ghani Mustard Oil is pressed in slow wooden-style expellers, and our turmeric, coriander, and red chili are freshly stone-milled to retain 100% natural aroma.\n\nUse your scheme code during online checkout or mention it when visiting our mill in Lalganj!`,
     ctaText: 'Shop Pure Products Online →',
-    ctaUrl: 'http://localhost:3000/products',
+    ctaUrl: '/products',
   },
   {
     id: 'chakki_free',
@@ -66,7 +66,7 @@ const emailPresets = [
     discountText: 'Free 5kg Milling on orders above 20kg grain',
     message: `Dear Valued Customer,\n\nBring your farm-harvested wheat, paddy, or mustard seeds directly to New Pandit Mill Yard (Vaishali Bus Stand Road, Lalganj).\n\nWe guarantee high yield, cool stone processing, and zero mix-ups. Show this email to our mill manager for your complimentary trial!`,
     ctaText: 'View Mill Services & Rates →',
-    ctaUrl: 'http://localhost:3000/services',
+    ctaUrl: '/services',
   },
   {
     id: 'loyalty100',
@@ -77,7 +77,7 @@ const emailPresets = [
     discountText: 'Flat ₹100 Instant Discount',
     message: `Dear Valued Patron,\n\nThank you for choosing New Pandit Masala & Tel Mill as your household source for pure essentials. To show our gratitude, here is a special ₹100 gift voucher for your next purchase.\n\nApplicable on all cold-pressed oils, spice powders, and rolled poha.`,
     ctaText: 'Claim Your ₹100 Voucher Now →',
-    ctaUrl: 'http://localhost:3000/products',
+    ctaUrl: '/products',
   },
 ];
 
