@@ -1,6 +1,8 @@
 import { Product, Service, Category, Order, User, CallbackRequest } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+const API_BASE_URL = 'https://api.newpanditmasala.shop/api';
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -342,7 +344,7 @@ class ApiClient {
     if (params?.category && params.category !== 'all') query.append('category', params.category);
     if (params?.search) query.append('search', params.search);
     if (params?.sort) query.append('sort', params.sort);
-    
+
     const queryStr = query.toString() ? `?${query.toString()}` : '';
     const res = await this.request<DataResponse<ApiProduct[]>>(`/products${queryStr}`);
     return res.data.map(normaliseProduct);
