@@ -1,8 +1,6 @@
 import { Product, Service, Category, Order, User, CallbackRequest } from '@/types';
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
-const API_BASE_URL = 'https://api.newpanditmasala.shop/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.newpanditmasala.shop/api';
 
 interface ApiResponse<T = unknown> {
   success: boolean;

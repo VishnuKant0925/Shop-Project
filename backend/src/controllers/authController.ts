@@ -171,10 +171,9 @@ export const requestOtp = async (
       return;
     }
 
-    // Keep this response neutral so this endpoint cannot be used to enumerate accounts.
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(200).json({ success: true, message: 'If an account exists for this email, a sign-in code has been sent.' });
+      res.status(404).json({ success: false, message: 'No account found with this email. Please create an account first.' });
       return;
     }
 
@@ -202,9 +201,14 @@ export const requestOtp = async (
 
     try {
       await sendLoginOtpEmail(email, code);
-    } catch (emailError) {
+    } catch (emailError: any) {
       await LoginOtp.deleteOne({ email });
-      throw emailError;
+      console.error('[Auth] Failed to dispatch login OTP:', emailError?.message || emailError);
+      res.status(emailError?.statusCode || 500).json({
+        success: false,
+        message: emailError?.message || 'Unable to deliver sign-in email. Please check server SMTP configuration.',
+      });
+      return;
     }
 
     res.status(200).json({ success: true, message: 'A six-digit sign-in code has been sent to your email.' });

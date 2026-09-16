@@ -1,30 +1,54 @@
 import nodemailer from 'nodemailer';
 
 const isConfigured = (): boolean => Boolean(
-  process.env.SMTP_HOST && process.env.SMTP_FROM
+  (process.env.SMTP_HOST || process.env.SMTP_SERVICE) &&
+  process.env.SMTP_USER &&
+  process.env.SMTP_PASS &&
+  process.env.SMTP_FROM
 );
 
 const createTransporter = () => {
-  const smtpPort = Number(process.env.SMTP_PORT || 587);
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+  const host = process.env.SMTP_HOST || '';
+  const port = Number(process.env.SMTP_PORT || 465);
+  const user = process.env.SMTP_USER?.trim();
+  // Strip any whitespace from Google App Passwords
+  const pass = process.env.SMTP_PASS?.replace(/\s+/g, '');
+  const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : port === 465;
+
+  // Use nodemailer's native 'gmail' transport for Gmail.
+  // Cloud providers (like Render on GCP) block or throttle outbound port 587 STARTTLS.
+  // The 'gmail' service connects reliably via SSL (port 465).
+  if (host.toLowerCase().includes('gmail') || process.env.SMTP_SERVICE?.toLowerCase() === 'gmail') {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+    });
+  }
+
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: smtpPort,
-    secure: process.env.SMTP_SECURE === 'true',
-    ...(smtpUser && smtpPass ? { auth: { user: smtpUser, pass: smtpPass } } : {}),
+    host,
+    port,
+    secure,
+    ...(user && pass ? { auth: { user, pass } } : {}),
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 };
 
 export const sendLoginOtpEmail = async (email: string, code: string): Promise<void> => {
   if (!isConfigured()) {
-    const error = new Error('Email sign-in is not configured. Set SMTP_HOST and SMTP_FROM on the server.') as Error & { statusCode?: number };
+    const error = new Error('Email sign-in is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS, and SMTP_FROM on the server.') as Error & { statusCode?: number };
     error.statusCode = 503;
     throw error;
   }
 
   const transporter = createTransporter();
 
+  console.log(`[Email] Sending sign-in OTP to ${email}...`);
   await transporter.sendMail({
     from: process.env.SMTP_FROM,
     to: email,
@@ -32,6 +56,7 @@ export const sendLoginOtpEmail = async (email: string, code: string): Promise<vo
     text: `Your New Pandit sign-in code is ${code}. It expires in 10 minutes. Do not share this code with anyone.`,
     html: `<p>Your New Pandit sign-in code is:</p><p style="font-size: 24px; font-weight: 700; letter-spacing: 4px;">${code}</p><p>This code expires in 10 minutes. Do not share it with anyone.</p>`,
   });
+  console.log(`[Email] Successfully sent sign-in OTP to ${email}`);
 };
 
 export const sendOrderReadyEmail = async (
