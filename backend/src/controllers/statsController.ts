@@ -74,7 +74,7 @@ export const getDashboardStats = async (
       previousMonthRevenue > 0
         ? (((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100).toFixed(1)
         : currentMonthRevenue > 0
-        ? '+100'
+        ? '100'
         : '0';
 
     const currentMonthOrders = orders.filter((o) => o.createdAt >= thirtyDaysAgo).length;
@@ -86,7 +86,7 @@ export const getDashboardStats = async (
       previousMonthOrders > 0
         ? (((currentMonthOrders - previousMonthOrders) / previousMonthOrders) * 100).toFixed(1)
         : currentMonthOrders > 0
-        ? '+100'
+        ? '100'
         : '0';
 
     res.status(200).json({

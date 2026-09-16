@@ -3,9 +3,7 @@ import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { ProductCatalogProvider } from '@/context/ProductCatalogContext';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import OrderNotificationToast from '@/components/notifications/OrderNotification';
+import AppShell from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
   title: 'New Pandit Masala & Tel Mill — 100% Pure Cold-Pressed & Traditional Chakki',
@@ -37,12 +35,9 @@ export default function RootLayout({
         <AuthProvider>
           <ProductCatalogProvider>
             <CartProvider>
-              <Navbar />
-              <main style={{ minHeight: '100vh', paddingTop: '80px' }}>
+              <AppShell>
                 {children}
-              </main>
-              <Footer />
-              <OrderNotificationToast />
+              </AppShell>
             </CartProvider>
           </ProductCatalogProvider>
         </AuthProvider>

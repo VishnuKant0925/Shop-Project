@@ -15,6 +15,7 @@ import healthRoutes from './routes/healthRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import statsRoutes from './routes/statsRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import customerRoutes from './routes/customerRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 export const createApp = (): Application => {
@@ -31,10 +32,16 @@ export const createApp = (): Application => {
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // CORS configuration
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const rawOrigins = process.env.CLIENT_URL || 'http://localhost:3000';
+  const allowedOrigins = rawOrigins
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .concat(['http://localhost:3000', 'http://127.0.0.1:3000']);
+
   app.use(
     cors({
-      origin: [clientUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'],
+      origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
@@ -70,6 +77,7 @@ export const createApp = (): Application => {
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/stats', statsRoutes);
   app.use('/api/upload', uploadRoutes);
+  app.use('/api/customers', customerRoutes);
 
   // 404 Route Handler
   app.use((_req: Request, res: Response) => {

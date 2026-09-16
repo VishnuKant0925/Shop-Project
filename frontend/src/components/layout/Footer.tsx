@@ -23,7 +23,7 @@ export default function Footer() {
               <span className={styles.brandColName}>New Pandit Mill</span>
             </div>
             <p className={styles.brandDesc}>
-              Authentic wooden-kohlu cold-pressed oils and slow stone-ground spices since 1984. Zero adulteration guarantee.
+              High-quality filtered cold-pressed oil and slow stone-ground spices since 1984. Zero adulteration guarantee.
             </p>
             <span className={styles.fssaiBadge}>
               FSSAI Lic. #10023948000122
@@ -35,9 +35,9 @@ export default function Footer() {
             <h4 className={styles.colTitle}>Our Pure Products</h4>
             <ul className={styles.colLinks}>
               <li><Link href="/products/mustard-oil">Kachi Ghani Mustard Oil</Link></li>
-              <li><Link href="/products">Stone-Ground Turmeric &amp; Chilli</Link></li>
+              <li><Link href="/products">Stone-Ground Turmeric &amp; Chilli Powder</Link></li>
               <li><Link href="/products/coriander-powder">Coriander Powder</Link></li>
-              <li><Link href="/products">Fresh Rolled Poha</Link></li>
+              <li><Link href="/products">Fresh Rolled Poha/Chiwra</Link></li>
             </ul>
           </div>
 
@@ -45,16 +45,17 @@ export default function Footer() {
           <div className={styles.footerCol}>
             <h4 className={styles.colTitle}>Mill Yard &amp; Hours</h4>
             <p className={styles.colText}>
-              Near Chhoti Mandi, Main Market Gate 2, Industrial Mill Zone
+              Vaishali Bus Stand Road,<br />Lalganj 844121, Vaishali, Bihar
             </p>
-            <p className={styles.colTextBold}>Mon - Sat: 7:00 AM - 8:30 PM</p>
-            <p className={styles.colTextAccent}>Sunday: Bulk Wholesale Dispatch Only</p>
+            <p className={styles.colTextBold}>Mon - Sun: 8:00 AM - 9:00 PM</p>
+            {/* <p className={styles.colTextAccent}>Sunday: Bulk Wholesale Dispatch Only</p> */}
           </div>
 
           {/* Col 4: Contact & ERP */}
           <div className={styles.footerCol}>
             <h4 className={styles.colTitle}>Direct Helpdesk</h4>
-            <p className={styles.colPhone}>+91 98765 43210</p>
+            <p className={styles.colPhone}>+91 9934787476</p>
+            <p className={styles.colPhone}>+91 8226889960</p>
             <p className={styles.colText}>
               Speak directly to the mill manager for live rate enquiries.
             </p>

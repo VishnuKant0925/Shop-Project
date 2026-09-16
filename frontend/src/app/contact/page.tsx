@@ -41,7 +41,7 @@ export default function ContactPage() {
                 <span className={styles.infoCardIcon}>📍</span>
                 <div>
                   <h4>Visit Us</h4>
-                  <p>Main Market Road,<br />Your City, India</p>
+                  <p>Vaishali Bus Stand Road,<br />Lalganj 844121, Vaishali, Bihar</p>
                 </div>
               </div>
 
@@ -49,8 +49,9 @@ export default function ContactPage() {
                 <span className={styles.infoCardIcon}>📞</span>
                 <div>
                   <h4>Call Us</h4>
-                  <p>+91 98765 43210</p>
-                  <small>Mon-Sat, 8AM - 8PM</small>
+                  <p>+91 9934787476</p>
+                  <p>+91 8226889960</p>
+                  <small>Mon-Sun, 8AM - 10PM</small>
                 </div>
               </div>
 
@@ -58,7 +59,7 @@ export default function ContactPage() {
                 <span className={styles.infoCardIcon}>✉️</span>
                 <div>
                   <h4>Email Us</h4>
-                  <p>info@newpanditmasala.com</p>
+                  <p>asharfipandit844121@gmail.com</p>
                 </div>
               </div>
 
@@ -66,7 +67,7 @@ export default function ContactPage() {
                 <span className={styles.infoCardIcon}>💬</span>
                 <div>
                   <h4>WhatsApp</h4>
-                  <p>+91 98765 43210</p>
+                  <p>+91 9934787476</p>
                   <small>Quick responses!</small>
                 </div>
               </div>
@@ -105,7 +106,7 @@ export default function ContactPage() {
                       <input
                         id="contact-phone"
                         type="tel"
-                        placeholder="+91 98765 43210"
+                        placeholder="+91 9934787476"
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         required

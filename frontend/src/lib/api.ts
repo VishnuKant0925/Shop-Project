@@ -67,6 +67,76 @@ export interface DashboardStats {
   }[];
 }
 
+export interface CustomerSummary {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  createdAt: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderDate: string | null;
+  lastOrderNumber: string | null;
+  lastOrderStatus: string | null;
+}
+
+export interface CustomerDetail {
+  customer: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  orders: {
+    id: string;
+    orderNumber: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    shippingAddress: string;
+    items: {
+      productId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+    }[];
+    subtotal: number;
+    tax: number;
+    total: number;
+    status: string;
+    createdAt: string;
+  }[];
+  stats: {
+    totalOrders: number;
+    totalSpent: number;
+    avgOrderValue: number;
+  };
+}
+
+export interface PromotionPayload {
+  recipientType: 'all' | 'selected' | 'individual';
+  recipientEmails?: string[];
+  subject: string;
+  headline: string;
+  offerCode?: string;
+  discountText?: string;
+  message: string;
+  ctaUrl?: string;
+  ctaText?: string;
+}
+
+export interface PromotionResult {
+  success: boolean;
+  sentCount: number;
+  totalRecipients: number;
+  message: string;
+  errors?: { email: string; error: string }[];
+}
+
 const getErrorMessage = (data: unknown, fallback: string): string => {
   if (typeof data === 'object' && data !== null && 'message' in data) {
     const { message } = data as { message?: unknown };
@@ -434,6 +504,25 @@ class ApiClient {
   async getDashboardStats(): Promise<DashboardStats> {
     const res = await this.request<DataResponse<DashboardStats>>('/stats/dashboard');
     return res.data;
+  }
+
+  // Customers & CRM (Admin)
+  async getCustomers(query = ''): Promise<{ data: CustomerSummary[]; stats: { totalCustomers: number; totalOrders: number; totalSpend: number; repeatCustomers: number } }> {
+    const q = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : '';
+    const res = await this.request<{ success: boolean; data: CustomerSummary[]; stats: { totalCustomers: number; totalOrders: number; totalSpend: number; repeatCustomers: number } }>(`/customers${q}`);
+    return { data: res.data, stats: res.stats };
+  }
+
+  async getCustomerDetails(id: string): Promise<CustomerDetail> {
+    const res = await this.request<DataResponse<CustomerDetail>>(`/customers/${id}`);
+    return res.data;
+  }
+
+  async sendCustomerPromotion(payload: PromotionPayload): Promise<PromotionResult> {
+    return this.request<PromotionResult>('/customers/send-promotions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 }
 

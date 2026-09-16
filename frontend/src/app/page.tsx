@@ -323,7 +323,7 @@ export default function HomePage() {
                   <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-primary)' }}>schedule</span>
                   Processing Time: ~{Math.round(selectedWeight * 0.5)} mins
                 </span>
-                <a href="tel:+919876543210" className={styles.calcFooterLink}>Book Slot →</a>
+                <a href="tel:+919934787476" className={styles.calcFooterLink}>Book Slot →</a>
               </div>
             </div>
           </div>
@@ -485,11 +485,11 @@ export default function HomePage() {
             </p>
           </div>
           <div className={styles.ctaBannerActions}>
-            <a href="tel:+919876543210" className={styles.ctaBannerPhone}>
+            <a href="tel:+919934787476" className={styles.ctaBannerPhone}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--color-primary)' }}>phone</span>
-              +91 98765 43210
+              +91 9934787476
             </a>
-            <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className={styles.ctaBannerWhatsApp}>
+            <a href="https://wa.me/919934787476" target="_blank" rel="noopener noreferrer" className={styles.ctaBannerWhatsApp}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
               WhatsApp Mill
             </a>
