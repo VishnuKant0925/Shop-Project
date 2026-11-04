@@ -3,6 +3,9 @@ import { AuthRequest } from '../middleware/auth';
 import { User } from '../models/User';
 import { Order } from '../models/Order';
 import { sendPromotionalEmail } from '../services/emailService';
+import { PAID_STATUSES, searchRegex } from '../utils/helpers';
+
+type LeanOrder = { orderNumber: string; user?: unknown; customerEmail?: string; total: number; status: string; createdAt: Date };
 
 /* ── Get All Customers with Aggregate Order Metrics ── */
 export const getAllCustomers = async (
@@ -15,13 +18,9 @@ export const getAllCustomers = async (
 
     // Filter customers
     const userQuery: Record<string, unknown> = { role: 'customer' };
-    if (q && typeof q === 'string' && q.trim()) {
-      const searchRegex = new RegExp(q.trim(), 'i');
-      userQuery.$or = [
-        { name: searchRegex },
-        { email: searchRegex },
-        { phone: searchRegex },
-      ];
+    const rx = searchRegex(q);
+    if (rx) {
+      userQuery.$or = [{ name: rx }, { email: rx }, { phone: rx }];
     }
 
     const customers = await User.find(userQuery)
@@ -43,23 +42,37 @@ export const getAllCustomers = async (
       .sort({ createdAt: -1 })
       .lean();
 
-    // Map orders to customers
+    // Group orders by customer once (by user id, or by email for legacy orders without a user)
+    const ordersByKey = new Map<string, LeanOrder[]>();
+    for (const o of allOrders as LeanOrder[]) {
+      const keys = new Set<string>();
+      if (o.user) keys.add(`id:${String(o.user)}`);
+      if (o.customerEmail) keys.add(`email:${o.customerEmail.toLowerCase()}`);
+      for (const key of keys) {
+        const list = ordersByKey.get(key);
+        if (list) list.push(o);
+        else ordersByKey.set(key, [o]);
+      }
+    }
+
     let totalCustomerOrders = 0;
     let totalCustomerSpend = 0;
     let repeatCustomerCount = 0;
 
     const enrichedCustomers = customers.map((customer) => {
-      const custIdStr = customer._id.toString();
-      const custEmailStr = customer.email.toLowerCase();
-
-      const userOrders = allOrders.filter(
-        (o) =>
-          (o.user && o.user.toString() === custIdStr) ||
-          (o.customerEmail && o.customerEmail.toLowerCase() === custEmailStr)
-      );
-
+      const seen = new Set<LeanOrder>();
+      const userOrders: LeanOrder[] = [];
+      for (const key of [`id:${customer._id.toString()}`, `email:${customer.email.toLowerCase()}`]) {
+        for (const o of ordersByKey.get(key) || []) {
+          if (!seen.has(o)) {
+            seen.add(o);
+            userOrders.push(o);
+          }
+        }
+      }
+      userOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       const completedOrders = userOrders.filter((o) =>
-        ['paid', 'preparing', 'ready', 'completed'].includes(o.status)
+        (PAID_STATUSES as readonly string[]).includes(o.status)
       );
 
       const totalSpent = completedOrders.reduce((sum, o) => sum + o.total, 0);
@@ -125,7 +138,7 @@ export const getCustomerById = async (
       .lean();
 
     const completedOrders = orders.filter((o) =>
-      ['paid', 'preparing', 'ready', 'completed'].includes(o.status)
+      (PAID_STATUSES as readonly string[]).includes(o.status)
     );
 
     const totalSpent = completedOrders.reduce((sum, o) => sum + o.total, 0);

@@ -7,7 +7,7 @@
   background:
     radial-gradient(ellipse at 20% 20%, rgba(217, 119, 6, 0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 80%, rgba(154, 52, 18, 0.06) 0%, transparent 50%),
-    #fcfbf9;
+    var(--color-surface);
 }
 
 .authContainer {
@@ -16,13 +16,13 @@
   max-width: 860px;
   width: 100%;
   margin: 0.75rem auto 1.5rem;
-  background: #ffffff;
+  background: var(--color-surface-container-lowest);
   border-radius: 20px;
   overflow: hidden;
   box-shadow:
     0 20px 40px -10px rgba(45, 20, 5, 0.12),
     0 4px 10px 0 rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(226, 222, 214, 0.8);
+  border: 1px solid var(--color-outline);
   animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -130,7 +130,7 @@
   line-height: 1.15;
   margin: 0;
   text-transform: uppercase;
-  background: linear-gradient(90deg, #fef3c7 0%, #fbbf24 25%, #ffffff 50%, #f59e0b 75%, #fef3c7 100%);
+  background: linear-gradient(90deg, var(--color-primary-light) 0%, #fbbf24 25%, #ffffff 50%, #f59e0b 75%, var(--color-primary-light) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -251,7 +251,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: #ffffff;
+  background: var(--color-surface-container-lowest);
 }
 
 .mobileBrandHeader {
@@ -260,14 +260,14 @@
   gap: 0.65rem;
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #f0ebe1;
+  border-bottom: 1px solid var(--color-outline-variant);
 }
 
 .mobileBrandLogo {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #d97706, #9a3412);
+  background: linear-gradient(135deg, var(--color-primary-container), var(--color-secondary));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -277,14 +277,14 @@
 .mobileBrandTitles h3 {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #1f1d1a;
+  color: var(--color-on-surface);
   margin: 0;
 }
 
 .mobileBrandTitles p {
   font-size: 0.7rem;
   font-weight: 600;
-  color: #b45309;
+  color: var(--color-primary);
   margin: 0;
   text-transform: uppercase;
 }
@@ -301,26 +301,26 @@
   font-family: var(--font-heading, 'Work Sans', sans-serif);
   font-size: 1.45rem;
   font-weight: 800;
-  color: #1f1d1a;
+  color: var(--color-on-surface);
   letter-spacing: -0.02em;
   margin: 0 0 0.25rem 0;
 }
 
 .formSubtitle {
   font-size: 0.825rem;
-  color: #5f5b53;
+  color: var(--color-on-surface-variant);
   margin: 0;
 }
 
 .formLink {
-  color: #b45309;
+  color: var(--color-primary);
   font-weight: 700;
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
 .formLink:hover {
-  color: #9a3412;
+  color: var(--color-secondary);
   text-decoration: underline;
 }
 
@@ -329,7 +329,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
-  background: #f4f0eb;
+  background: var(--color-surface-dim);
   padding: 0.25rem;
   border-radius: 10px;
   margin-bottom: 1rem;
@@ -346,19 +346,19 @@
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #5f5b53;
+  color: var(--color-on-surface-variant);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .methodTab:hover:not(.methodTabActive) {
-  color: #1f1d1a;
-  background: rgba(255, 255, 255, 0.5);
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-low);
 }
 
 .methodTabActive {
-  background: #ffffff;
-  color: #b45309;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-primary);
   font-weight: 700;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
@@ -376,15 +376,15 @@
 }
 
 .alertError {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger-text);
 }
 
 .alertSuccess {
-  background: #f0fdf4;
+  background: var(--color-success-bg);
   border: 1px solid #bbf7d0;
-  color: #166534;
+  color: var(--color-success-text);
 }
 
 .alertIcon {
@@ -409,12 +409,12 @@
   display: block;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #1f1d1a;
+  color: var(--color-on-surface);
 }
 
 .optionalTag {
   font-size: 0.7rem;
-  color: #9a948e;
+  color: var(--color-text-light);
   font-weight: 500;
 }
 
@@ -427,7 +427,7 @@
 .fieldIcon {
   position: absolute;
   left: 0.85rem;
-  color: #9a948e;
+  color: var(--color-text-light);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -439,9 +439,9 @@
   width: 100%;
   padding: 0.65rem 0.85rem 0.65rem 2.4rem;
   font-size: 0.875rem;
-  color: #1f1d1a;
-  background: #fdfcfb;
-  border: 1.5px solid #e2ded6;
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-low);
+  border: 1.5px solid var(--color-outline);
   border-radius: 10px;
   outline: none;
   font-family: inherit;
@@ -449,25 +449,25 @@
 }
 
 .inputWrapper input::placeholder {
-  color: #9a948e;
+  color: var(--color-text-light);
 }
 
 .inputWrapper input:focus {
-  background: #ffffff;
-  border-color: #b45309;
+  background: var(--color-surface-container-lowest);
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.14);
 }
 
 .inputWrapper input:focus+.fieldIcon,
 .inputWrapper:focus-within .fieldIcon {
-  color: #b45309;
+  color: var(--color-primary);
 }
 
 .inputWrapper input:disabled {
-  background: #f4f0eb;
-  color: #9a948e;
+  background: var(--color-surface-dim);
+  color: var(--color-text-light);
   cursor: not-allowed;
-  border-color: #e8e1d5;
+  border-color: var(--color-surface-container-high);
 }
 
 /* Password eye toggle */
@@ -480,15 +480,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9a948e;
+  color: var(--color-text-light);
   cursor: pointer;
   border-radius: 6px;
   transition: color 0.18s ease, background-color 0.18s ease;
 }
 
 .eyeToggleBtn:hover {
-  color: #1f1d1a;
-  background-color: #f1ebe1;
+  color: var(--color-on-surface);
+  background-color: var(--color-surface-container);
 }
 
 /* Password Match Indicator */
@@ -502,11 +502,11 @@
 }
 
 .matchSuccess {
-  color: #166534;
+  color: var(--color-success-text);
 }
 
 .matchWarning {
-  color: #b45309;
+  color: var(--color-primary);
 }
 
 /* Primary Submit Button */
@@ -516,7 +516,7 @@
   font-size: 0.9rem;
   font-weight: 700;
   color: #ffffff;
-  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -533,7 +533,7 @@
 .submitBtn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(180, 83, 9, 0.3);
-  background: linear-gradient(135deg, #9a3412 0%, #b45309 100%);
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
 }
 
 .submitBtn:active:not(:disabled) {
@@ -557,7 +557,7 @@
   background: none;
   border: 0;
   padding: 0;
-  color: #b45309;
+  color: var(--color-primary);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -565,7 +565,7 @@
 }
 
 .textBtn:hover:not(:disabled) {
-  color: #9a3412;
+  color: var(--color-secondary);
   text-decoration: underline;
 }
 
@@ -595,7 +595,7 @@
   align-items: center;
   gap: 0.75rem;
   margin: 0.9rem 0 0.75rem;
-  color: #9a948e;
+  color: var(--color-text-light);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -607,7 +607,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: #e8e1d5;
+  background: var(--color-surface-container-high);
 }
 
 /* Continue as Guest Button */
@@ -620,10 +620,10 @@
   padding: 0.6rem 0.85rem;
   font-size: 0.825rem;
   font-weight: 600;
-  color: #5f5b53;
+  color: var(--color-on-surface-variant);
   text-align: center;
-  background: #fdfcfb;
-  border: 1.5px solid #e2ded6;
+  background: var(--color-surface-container-low);
+  border: 1.5px solid var(--color-outline);
   border-radius: 10px;
   text-decoration: none;
   transition: all 0.2s ease;
@@ -631,9 +631,9 @@
 }
 
 .guestBtn:hover {
-  background: #ffffff;
-  border-color: #b45309;
-  color: #b45309;
+  background: var(--color-surface-container-lowest);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
   transform: translateY(-1px);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
 }
@@ -649,10 +649,10 @@
 .authForm :global(.googleConfigurationHint) {
   margin: 0 0 0.75rem;
   padding: 0.45rem 0.75rem;
-  background: #f9f6f0;
-  border: 1px dashed #e2ded6;
+  background: var(--color-surface-container-low);
+  border: 1px dashed var(--color-outline);
   border-radius: 8px;
-  color: #78716c;
+  color: var(--color-on-surface-variant);
   font-size: 0.775rem;
   text-align: center;
   font-weight: 500;

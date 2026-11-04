@@ -58,10 +58,13 @@ export interface Order {
   shippingAddress: string;
   items: OrderItem[];
   subtotal: number;
+  discount?: number;
+  couponCode?: string;
   tax: number;
   total: number;
   status: OrderStatus;
   paymentScreenshotUrl?: string;
+  adminNote?: string;
   createdAt: string;
 }
 
@@ -76,5 +79,48 @@ export interface OrderItem {
 export interface CallbackRequest {
   name: string;
   phone: string;
+  email?: string;
   message?: string;
+}
+
+export interface CallbackItem extends CallbackRequest {
+  id: string;
+  status: 'pending' | 'contacted' | 'resolved';
+  createdAt: string;
+}
+
+export interface MillRate {
+  label: string;
+  price: string;
+}
+
+export interface StoreSettings {
+  storeName: string;
+  phones: string[];
+  whatsapp: string;
+  email: string;
+  address: string;
+  hours: string;
+  upiId: string;
+  upiName: string;
+  taxRate: number;
+  acceptingOrders: boolean;
+  closedMessage: string;
+  announcement: string;
+  millRates: MillRate[];
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  description: string;
+  type: 'percent' | 'flat';
+  value: number;
+  minOrder: number;
+  maxDiscount: number;
+  expiresAt?: string | null;
+  usageLimit: number;
+  usedCount: number;
+  isActive: boolean;
+  createdAt?: string;
 }

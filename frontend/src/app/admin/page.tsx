@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { api, DashboardStats } from '@/lib/api';
 import styles from './page.module.css';
+import ui from './admin.module.css';
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-IN', {
@@ -33,12 +34,15 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  // "x minutes ago" is measured from when the stats were fetched (keeps render pure)
+  const [loadedAt, setLoadedAt] = useState(0);
 
   const fetchStats = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
     try {
       const data = await api.getDashboardStats();
       setStats(data);
+      setLoadedAt(Date.now());
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
@@ -49,11 +53,23 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+    let active = true;
+    api.getDashboardStats()
+      .then((data) => {
+        if (!active) return;
+        setStats(data);
+        setLoadedAt(Date.now());
+        setError('');
+      })
+      .catch((err) => active && setError(err instanceof Error ? err.message : 'Failed to load dashboard data'))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const formatTimeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
+    const diff = loadedAt - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return 'Just now';
     if (mins < 60) return `${mins}m ago`;
@@ -174,6 +190,40 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Needs attention */}
+      <div className={ui.list} style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {[
+          { label: 'Today', value: `${stats.todayOrders ?? 0} orders · ${formatCurrency(stats.todayRevenue ?? 0)}`, href: '/admin/orders' },
+          { label: 'Payments to verify', value: String(stats.awaitingVerification ?? 0), href: '/admin/orders' },
+          { label: 'Awaiting payment', value: String(stats.awaitingPayment ?? 0), href: '/admin/orders' },
+          { label: 'New enquiries', value: String(stats.pendingEnquiries ?? 0), href: '/admin/enquiries' },
+        ].map((item) => (
+          <Link key={item.label} href={item.href} className={ui.row} style={{ flex: '1 1 200px' }}>
+            <div className={ui.rowMain} style={{ minWidth: 0 }}>
+              <div className={ui.rowMeta}>{item.label}</div>
+              <div className={ui.rowTitle} style={{ fontSize: '1.125rem' }}>{item.value}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {!!stats.topProducts?.length && (
+        <div className={ui.card}>
+          <h2 className={ui.cardTitle}>Top sellers (last 30 days)</h2>
+          <div className={ui.list}>
+            {stats.topProducts.map((p) => (
+              <div key={p.name} className={ui.row}>
+                <div className={ui.rowMain}>
+                  <div className={ui.rowTitle}>{p.name}</div>
+                  <div className={ui.rowMeta}>{p.quantity} units sold</div>
+                </div>
+                <strong>{formatCurrency(p.revenue)}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className={styles.mainGrid}>

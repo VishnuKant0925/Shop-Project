@@ -80,7 +80,7 @@
   font-size: 0.85rem;
   font-weight: 700;
   color: #FFFFFF;
-  background: linear-gradient(135deg, #b45309 0%, #9a3412 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
   border-radius: 10px;
   text-decoration: none;
   box-shadow: 0 4px 14px rgba(180, 83, 9, 0.3);
@@ -108,7 +108,7 @@
 }
 
 .identityCard {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border-radius: 16px;
   border: 1px solid var(--color-outline);
   box-shadow: 0 2px 12px rgba(31, 29, 26, 0.05);
@@ -132,7 +132,7 @@
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
   color: #FFFFFF;
   font-family: var(--font-heading);
   font-size: 1.6rem;
@@ -179,7 +179,7 @@
   padding: 3px 10px;
   border-radius: 9999px;
   background: rgba(180, 83, 9, 0.1);
-  color: #b45309;
+  color: var(--color-primary);
   border: 1px solid rgba(180, 83, 9, 0.2);
 }
 
@@ -189,7 +189,7 @@
   padding: 3px 10px;
   border-radius: 9999px;
   background: rgba(22, 163, 74, 0.1);
-  color: #166534;
+  color: var(--color-success-text);
   border: 1px solid rgba(22, 163, 74, 0.2);
 }
 
@@ -200,7 +200,7 @@
   font-size: 0.72rem;
   font-weight: 600;
   color: #15803d;
-  background: #f0fdf4;
+  background: var(--color-success-bg);
   padding: 3px 8px;
   border-radius: 9999px;
 }
@@ -216,7 +216,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  background: #FCFBF9;
+  background: var(--color-surface);
   border: 1px solid var(--color-outline-variant);
   border-radius: 12px;
   padding: 1rem;
@@ -250,7 +250,7 @@
   gap: 0.75rem;
   padding: 0.75rem 0.875rem;
   border-radius: 10px;
-  background: #F9F7F4;
+  background: var(--color-surface-container-low);
   color: var(--color-on-surface);
   font-size: 0.825rem;
   font-weight: 600;
@@ -269,7 +269,7 @@
 }
 
 .quickNavLink:hover {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-primary);
   color: var(--color-primary);
   transform: translateX(3px);
@@ -290,21 +290,21 @@
   border-radius: 10px;
   font-size: 0.825rem;
   font-weight: 600;
-  color: #DC2626;
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .logoutBtn:hover {
-  background: #FEE2E2;
+  background: var(--color-danger-bg);
   border-color: #FCA5A5;
 }
 
 /* ── Mill Support Card ── */
 .supportCard {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border-radius: 16px;
   border: 1px solid var(--color-outline);
   box-shadow: 0 2px 12px rgba(31, 29, 26, 0.05);
@@ -322,7 +322,7 @@
 
 .supportIcon {
   font-size: 1.5rem;
-  background: #FEF3C7;
+  background: var(--color-primary-light);
   width: 40px;
   height: 40px;
   border-radius: 10px;
@@ -367,13 +367,13 @@
 }
 
 .supportCallBtn {
-  background: #F9F7F4;
+  background: var(--color-surface-container-low);
   color: var(--color-on-surface);
   border: 1px solid var(--color-outline);
 }
 
 .supportCallBtn:hover {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
@@ -403,7 +403,7 @@
 }
 
 .kpiCard {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   border-radius: 14px;
   padding: 1rem 1.25rem;
@@ -417,7 +417,7 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #FEF3C7;
+  background: var(--color-primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -452,10 +452,10 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.75rem 1rem;
-  background: #F0FDF4;
+  background: var(--color-success-bg);
   border: 1px solid #BBF7D0;
   border-radius: 10px;
-  color: #166534;
+  color: var(--color-success-text);
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -465,17 +465,17 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.75rem 1rem;
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
   border-radius: 10px;
-  color: #991B1B;
+  color: var(--color-danger-text);
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 /* ── Form Card ── */
 .formCard {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border-radius: 16px;
   border: 1px solid var(--color-outline);
   box-shadow: 0 2px 12px rgba(31, 29, 26, 0.05);
@@ -541,7 +541,7 @@
 }
 
 .requiredStar {
-  color: #DC2626;
+  color: var(--color-danger);
 }
 
 .badgeVerified {
@@ -549,15 +549,15 @@
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 9999px;
-  background: #DCFCE7;
-  color: #166534;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
   text-transform: uppercase;
 }
 
 .inputWrapper {
   display: flex;
   align-items: center;
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   border-radius: 10px;
   padding: 0 0.875rem;
@@ -599,7 +599,7 @@
 
 /* ── Security / Password Section ── */
 .securitySection {
-  background: #FCFBF9;
+  background: var(--color-surface);
   border: 1px solid var(--color-outline-variant);
   border-radius: 12px;
   padding: 1.25rem;
@@ -632,7 +632,7 @@
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--color-primary);
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   padding: 6px 14px;
   border-radius: 8px;
@@ -673,7 +673,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: #FFFFFF;
-  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -706,7 +706,7 @@
 
 /* ── Recent Orders Snapshot Card ── */
 .ordersSnapshotCard {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border-radius: 16px;
   border: 1px solid var(--color-outline);
   box-shadow: 0 2px 12px rgba(31, 29, 26, 0.05);
@@ -762,7 +762,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  background: #FCFBF9;
+  background: var(--color-surface);
   border: 1px dashed var(--color-outline);
   border-radius: 12px;
   gap: 1rem;
@@ -803,7 +803,7 @@
 }
 
 .recentOrderItem {
-  background: #FCFBF9;
+  background: var(--color-surface);
   border: 1px solid var(--color-outline);
   border-radius: 12px;
   padding: 1rem 1.25rem;
@@ -814,7 +814,7 @@
 }
 
 .recentOrderItem:hover {
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border-color: var(--color-primary);
   box-shadow: 0 4px 12px rgba(180, 83, 9, 0.06);
 }

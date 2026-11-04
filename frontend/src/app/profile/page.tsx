@@ -40,8 +40,11 @@ export default function ProfilePage() {
   const { user, isLoading, refreshUser, logout } = useAuth();
   const router = useRouter();
 
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  // null = untouched, so the field shows the saved value from the session
+  const [nameDraft, setName] = useState<string | null>(null);
+  const [phoneDraft, setPhone] = useState<string | null>(null);
+  const name = nameDraft ?? user?.name ?? '';
+  const phone = phoneDraft ?? user?.phone ?? '';
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -58,9 +61,6 @@ export default function ProfilePage() {
       router.push('/auth/login');
     }
     if (user) {
-      setName(user.name);
-      setPhone(user.phone || '');
-
       api.getMyOrders()
         .then((data) => setOrders(data))
         .catch(() => setOrders([]))

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { Service } from '@/types';
 import styles from '../products/page.module.css';
+import ui from '../admin.module.css';
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-IN', {
@@ -21,6 +22,7 @@ type ServiceForm = {
   description: string;
   icon: string;
   features: string;
+  isActive: boolean;
 };
 
 const emptyForm = (): ServiceForm => ({
@@ -30,6 +32,7 @@ const emptyForm = (): ServiceForm => ({
   description: '',
   icon: '⚙️',
   features: '',
+  isActive: true,
 });
 
 export default function AdminServicesPage() {
@@ -47,7 +50,7 @@ export default function AdminServicesPage() {
 
   const fetchServices = useCallback(async () => {
     try {
-      const data = await api.getServices();
+      const data = await api.getServices({ all: true });
       setServiceList(data);
       setError('');
     } catch (err) {
@@ -58,8 +61,19 @@ export default function AdminServicesPage() {
   }, []);
 
   useEffect(() => {
-    fetchServices();
-  }, [fetchServices]);
+    let active = true;
+    api.getServices({ all: true })
+      .then((data) => {
+        if (!active) return;
+        setServiceList(data);
+        setError('');
+      })
+      .catch((err) => active && setError(err instanceof Error ? err.message : 'Failed to load services'))
+      .finally(() => active && setIsLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const closeForm = () => {
     setShowForm(false);
@@ -78,6 +92,7 @@ export default function AdminServicesPage() {
       description: service.description,
       icon: service.icon,
       features: service.features.join(', '),
+      isActive: service.isActive,
     });
     setImagePreview(service.imageUrl);
     setImageFile(null);
@@ -141,6 +156,7 @@ export default function AdminServicesPage() {
       description: form.description,
       icon: form.icon || '⚙️',
       features: form.features.split(',').map((f) => f.trim()).filter(Boolean),
+      isActive: form.isActive,
       ...(imageUrl ? { imageUrl } : {}),
     };
 
@@ -207,11 +223,16 @@ export default function AdminServicesPage() {
                 <label>Features (comma separated)</label>
                 <input type="text" placeholder="Feature 1, Feature 2, ..." value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} disabled={isSaving} />
               </div>
+              <label className={ui.toggleRow}>
+                <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} disabled={isSaving} />
+                Show on the Services page
+              </label>
               <div className={styles.inputGroup}>
                 <label>Service Image</label>
                 <input type="file" accept="image/*" onChange={handleImageChange} disabled={isSaving} />
                 {imagePreview && (
                   <div className={styles.imagePreview}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- local blob: preview of the file being uploaded */}
                     <img src={imagePreview} alt="Preview" />
                   </div>
                 )}
@@ -228,7 +249,7 @@ export default function AdminServicesPage() {
       )}
 
       <div className={styles.tableCard}>
-        <div className={styles.tableHeader} style={{ gridTemplateColumns: '2fr 1fr 1fr 120px' }}>
+        <div className={styles.tableHeader} style={{ gridTemplateColumns: '2fr 1fr 1fr 180px' }}>
           <span>Service</span>
           <span>Rate</span>
           <span>Rate Unit</span>
@@ -245,14 +266,28 @@ export default function AdminServicesPage() {
           <p className={styles.tableMessage}>No services found. Add your first service!</p>
         ) : (
           serviceList.map((service) => (
-            <div key={service.id} className={styles.tableRow} style={{ gridTemplateColumns: '2fr 1fr 1fr 120px' }}>
+            <div key={service.id} className={styles.tableRow} style={{ gridTemplateColumns: '2fr 1fr 1fr 180px' }}>
               <div>
                 <strong>{service.icon} {service.name}</strong>
+                {!service.isActive && <span className={`${ui.badge} ${ui.badgeMuted}`} style={{ marginLeft: 6 }}>Hidden</span>}
               </div>
               <span className={styles.priceCell}>{formatCurrency(service.rate)}</span>
               <span>{service.rateUnit}</span>
               <div className={styles.actions}>
                 <button className={styles.editBtn} onClick={() => handleEdit(service)}>Edit</button>
+                <button
+                  className={styles.editBtn}
+                  onClick={async () => {
+                    try {
+                      await api.updateService(service.id, { isActive: !service.isActive });
+                      await fetchServices();
+                    } catch (err) {
+                      setActionError(err instanceof Error ? err.message : 'Unable to update this service.');
+                    }
+                  }}
+                >
+                  {service.isActive ? 'Hide' : 'Show'}
+                </button>
                 <button className={styles.deleteBtn} onClick={() => void handleDelete(service.id)}>Delete</button>
               </div>
             </div>

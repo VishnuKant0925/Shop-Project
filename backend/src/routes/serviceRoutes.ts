@@ -6,11 +6,11 @@ import {
   updateService,
   deleteService,
 } from '../controllers/serviceController';
-import { authenticate, requireAdmin } from '../middleware/auth';
+import { authenticate, optionalAuth, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/', getServices);
+router.get('/', optionalAuth, getServices);
 router.get('/:identifier', getServiceBySlugOrId);
 router.post('/', authenticate, requireAdmin, createService);
 router.put('/:id', authenticate, requireAdmin, updateService);

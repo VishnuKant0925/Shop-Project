@@ -1,0 +1,5 @@
+/* The header is sticky (in normal flow), so no top padding is needed here. */
+.main {
+  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100dvh - var(--header-height));
+}

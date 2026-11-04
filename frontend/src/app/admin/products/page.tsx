@@ -6,6 +6,7 @@ import { useProductCatalog } from '@/context/ProductCatalogContext';
 import { api } from '@/lib/api';
 import { Product } from '@/types';
 import styles from './page.module.css';
+import ui from '../admin.module.css';
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-IN', {
@@ -24,6 +25,7 @@ type ProductForm = {
   categoryId: string;
   stockQuantity: string;
   badge: string;
+  isActive: boolean;
 };
 
 const emptyForm = (categoryId = ''): ProductForm => ({
@@ -34,6 +36,7 @@ const emptyForm = (categoryId = ''): ProductForm => ({
   categoryId,
   stockQuantity: '',
   badge: '',
+  isActive: true,
 });
 
 export default function AdminProductsPage() {
@@ -65,6 +68,7 @@ export default function AdminProductsPage() {
       categoryId: product.categoryId,
       stockQuantity: String(product.stockQuantity),
       badge: product.badge || '',
+      isActive: product.isActive,
     });
     setImagePreview(product.imageUrl);
     setImageFile(null);
@@ -90,6 +94,21 @@ export default function AdminProductsPage() {
       await refreshCatalog();
     } catch (nextError: unknown) {
       setActionError(nextError instanceof Error ? nextError.message : 'Unable to delete this product.');
+    }
+  };
+
+  const [search, setSearch] = useState('');
+  const visibleProducts = productList.filter((p) =>
+    !search.trim() || p.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  const toggleVisibility = async (product: Product) => {
+    setActionError('');
+    try {
+      await api.updateProduct(product.id, { isActive: !product.isActive });
+      await refreshCatalog();
+    } catch (nextError: unknown) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Unable to update this product.');
     }
   };
 
@@ -129,7 +148,9 @@ export default function AdminProductsPage() {
       description: form.description,
       categoryId: form.categoryId,
       stockQuantity: Number(form.stockQuantity),
-      badge: form.badge || undefined,
+      // Send an empty string so a removed badge is actually cleared
+      badge: form.badge.trim(),
+      isActive: form.isActive,
       ...(imageUrl ? { imageUrl } : {}),
     };
 
@@ -161,6 +182,14 @@ export default function AdminProductsPage() {
       </div>
 
       {actionError && <p className={styles.formError}>{actionError}</p>}
+
+      <input
+        className={ui.search}
+        type="search"
+        placeholder={`Search ${productList.length} products…`}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
       {showForm && (
         <div className={styles.modalBackdrop} onClick={closeForm}>
@@ -206,6 +235,10 @@ export default function AdminProductsPage() {
                   <input id="product-badge" type="text" placeholder="e.g. Bestseller, Pure" value={form.badge} onChange={(event) => setForm({ ...form, badge: event.target.value })} disabled={isSaving} />
                 </div>
               </div>
+              <label className={ui.toggleRow}>
+                <input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} disabled={isSaving} />
+                Visible in store
+              </label>
               <div className={styles.inputGroup}>
                 <label htmlFor="product-description">Description</label>
                 <textarea id="product-description" rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required disabled={isSaving} />
@@ -215,6 +248,7 @@ export default function AdminProductsPage() {
                 <input id="product-image" type="file" accept="image/*" onChange={handleImageChange} disabled={isSaving} />
                 {imagePreview && (
                   <div className={styles.imagePreview}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- local blob: preview of the file being uploaded */}
                     <img src={imagePreview} alt="Preview" />
                   </div>
                 )}
@@ -245,13 +279,17 @@ export default function AdminProductsPage() {
             <p>{error}</p>
             <button className={styles.editBtn} onClick={() => void refreshCatalog()}>Try again</button>
           </div>
-        ) : productList.map((product) => (
+        ) : visibleProducts.map((product) => (
           <div key={product.id} className={styles.tableRow}>
             <div className={styles.productCell}>
               <Image src={product.imageUrl} alt={product.name} width={48} height={48} className={styles.productThumb} />
               <div>
                 <strong>{product.name}</strong>
-                <small>{product.slug}</small>
+                <small>
+                  {product.slug}
+                  {!product.isActive && <span className={`${ui.badge} ${ui.badgeMuted}`} style={{ marginLeft: 6 }}>Hidden</span>}
+                  {product.stockQuantity === 0 && <span className={`${ui.badge} ${ui.badgeWarn}`} style={{ marginLeft: 6 }}>Out of stock</span>}
+                </small>
               </div>
             </div>
             <span>{categories.find((category) => category.id === product.categoryId)?.name || '—'}</span>
@@ -259,6 +297,9 @@ export default function AdminProductsPage() {
             <span className={product.stockQuantity < 40 ? styles.lowStock : ''}>{product.stockQuantity} {product.unit}</span>
             <div className={styles.actions}>
               <button className={styles.editBtn} onClick={() => handleEdit(product)}>Edit</button>
+              <button className={styles.editBtn} onClick={() => void toggleVisibility(product)}>
+                {product.isActive ? 'Hide' : 'Show'}
+              </button>
               <button className={styles.deleteBtn} onClick={() => void handleDelete(product.id)}>Delete</button>
             </div>
           </div>

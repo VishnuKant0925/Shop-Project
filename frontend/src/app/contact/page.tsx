@@ -1,17 +1,34 @@
 'use client';
 
 import React, { useState } from 'react';
+import { api } from '@/lib/api';
 import styles from './page.module.css';
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 4000);
-    setForm({ name: '', phone: '', email: '', message: '' });
+    setError('');
+    setSending(true);
+    try {
+      await api.submitCallback({
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim() || undefined,
+        message: form.message.trim(),
+      });
+      setSubmitted(true);
+      setForm({ name: '', phone: '', email: '', message: '' });
+      setTimeout(() => setSubmitted(false), 6000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Could not send your request. Please call us instead.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -38,36 +55,36 @@ export default function ContactPage() {
 
             <div className={styles.infoCards}>
               <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon}>📍</span>
+                <span className={styles.infoCardIcon} aria-hidden="true">📍</span>
                 <div>
-                  <h4>Visit Us</h4>
+                  <h3>Visit Us</h3>
                   <p>Vaishali Bus Stand Road,<br />Lalganj 844121, Vaishali, Bihar</p>
                 </div>
               </div>
 
               <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon}>📞</span>
+                <span className={styles.infoCardIcon} aria-hidden="true">📞</span>
                 <div>
-                  <h4>Call Us</h4>
-                  <p>+91 9934787476</p>
-                  <p>+91 8226889960</p>
-                  <small>Mon-Sun, 8AM - 10PM</small>
+                  <h3>Call Us</h3>
+                  <p><a href="tel:+919934787476">+91 99347 87476</a></p>
+                  <p><a href="tel:+918226889960">+91 82268 89960</a></p>
+                  <small>Mon-Sun, 8AM - 9PM</small>
                 </div>
               </div>
 
               <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon}>✉️</span>
+                <span className={styles.infoCardIcon} aria-hidden="true">✉️</span>
                 <div>
-                  <h4>Email Us</h4>
-                  <p>asharfipandit844121@gmail.com</p>
+                  <h3>Email Us</h3>
+                  <p><a href="mailto:asharfipandit844121@gmail.com">asharfipandit844121@gmail.com</a></p>
                 </div>
               </div>
 
               <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon}>💬</span>
+                <span className={styles.infoCardIcon} aria-hidden="true">💬</span>
                 <div>
-                  <h4>WhatsApp</h4>
-                  <p>+91 9934787476</p>
+                  <h3>WhatsApp</h3>
+                  <p><a href="https://wa.me/919934787476" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>
                   <small>Quick responses!</small>
                 </div>
               </div>
@@ -81,7 +98,7 @@ export default function ContactPage() {
               <p className={styles.formSubtitle}>No account needed — just fill in your details.</p>
 
               {submitted ? (
-                <div className={styles.success}>
+                <div className={styles.success} role="status">
                   <span className={styles.successIcon}>✅</span>
                   <h3>Message Sent!</h3>
                   <p>We&apos;ll call you back within 30 minutes during business hours.</p>
@@ -94,6 +111,7 @@ export default function ContactPage() {
                       id="contact-name"
                       type="text"
                       placeholder="Your name"
+                      autoComplete="name"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       required
@@ -106,7 +124,9 @@ export default function ContactPage() {
                       <input
                         id="contact-phone"
                         type="tel"
-                        placeholder="+91 9934787476"
+                        placeholder="10-digit mobile number"
+                        inputMode="tel"
+                        autoComplete="tel"
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         required
@@ -118,6 +138,7 @@ export default function ContactPage() {
                         id="contact-email"
                         type="email"
                         placeholder="your@email.com"
+                        autoComplete="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                       />
@@ -136,8 +157,10 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <button type="submit" className={styles.submitBtn}>
-                    Send Message
+                  {error && <p className={styles.errorMsg} role="alert">{error}</p>}
+
+                  <button type="submit" className={styles.submitBtn} disabled={sending}>
+                    {sending ? 'Sending...' : 'Send Message'}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="22" y1="2" x2="11" y2="13" />
                       <polygon points="22 2 15 22 11 13 2 9 22 2" />

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { api, CustomerSummary, CustomerDetail, PromotionPayload } from '@/lib/api';
 import styles from './page.module.css';
 
@@ -130,7 +129,8 @@ export default function AdminCustomersPage() {
   }, []);
 
   useEffect(() => {
-    fetchCustomers(searchQuery);
+    const timer = window.setTimeout(() => void fetchCustomers(searchQuery), searchQuery ? 300 : 0);
+    return () => window.clearTimeout(timer);
   }, [fetchCustomers, searchQuery]);
 
   // View order history

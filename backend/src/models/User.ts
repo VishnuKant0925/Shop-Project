@@ -59,6 +59,8 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
+UserSchema.index({ role: 1, createdAt: -1 });
+
 // Hash password before saving
 UserSchema.pre<IUser>('save', async function (next) {
   if (!this.isModified('password') || !this.password) {

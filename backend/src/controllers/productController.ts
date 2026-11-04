@@ -1,72 +1,76 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { Product } from '../models/Product';
+import { AuthRequest } from '../middleware/auth';
 import { emitProductsChanged } from '../realtime';
+import { pick, searchRegex, slugify } from '../utils/helpers';
 
+const EDITABLE = ['name', 'slug', 'description', 'price', 'unit', 'stockQuantity', 'imageUrl', 'badge', 'isActive'] as const;
+
+const toUpdate = (body: Record<string, unknown>) => {
+  const data = pick(body, EDITABLE) as Record<string, unknown>;
+  if (body.categoryId !== undefined) data.category = body.categoryId;
+  if (data.price !== undefined) data.price = Number(data.price);
+  if (data.stockQuantity !== undefined) data.stockQuantity = Math.max(0, Math.floor(Number(data.stockQuantity) || 0));
+  if (typeof data.slug === 'string') data.slug = slugify(data.slug);
+  return data;
+};
+
+/**
+ * Public catalogue: only active products.
+ * Admins can pass `?all=true` to include hidden products for the management screens.
+ */
 export const getProducts = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { category, search, sort, isActive } = req.query;
+    const { category, search, sort, all } = req.query;
+    const query: Record<string, unknown> = {};
 
-    const query: Record<string, any> = {};
-
-    if (isActive !== undefined) {
-      query.isActive = isActive === 'true';
+    if (!(all === 'true' && req.user?.role === 'admin')) {
+      query.isActive = true;
     }
 
-    if (category && category !== 'all') {
-      if (mongoose.Types.ObjectId.isValid(category as string)) {
-        query.category = category;
-      }
+    if (typeof category === 'string' && category !== 'all' && mongoose.Types.ObjectId.isValid(category)) {
+      query.category = category;
     }
 
-    if (search) {
-      const searchRegex = new RegExp(search as string, 'i');
-      query.$or = [{ name: searchRegex }, { description: searchRegex }];
-    }
+    const rx = searchRegex(search);
+    if (rx) query.$or = [{ name: rx }, { description: rx }];
 
-    let sortOption: Record<string, any> = { createdAt: -1 };
-    if (sort === 'price-low') {
-      sortOption = { price: 1 };
-    } else if (sort === 'price-high') {
-      sortOption = { price: -1 };
-    }
+    let sortOption: Record<string, 1 | -1> = { createdAt: -1 };
+    if (sort === 'price-low') sortOption = { price: 1 };
+    else if (sort === 'price-high') sortOption = { price: -1 };
 
     const products = await Product.find(query)
       .populate('category', 'name slug')
       .sort(sortOption);
 
-    res.status(200).json({
-      success: true,
-      count: products.length,
-      data: products,
-    });
+    res.status(200).json({ success: true, count: products.length, data: products });
   } catch (error) {
     next(error);
   }
 };
 
 export const getProductBySlugOrId = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
     const { identifier } = req.params;
-    let product;
-
-    if (mongoose.Types.ObjectId.isValid(identifier)) {
-      product = await Product.findById(identifier).populate('category', 'name slug');
-    }
+    let product = mongoose.Types.ObjectId.isValid(identifier)
+      ? await Product.findById(identifier).populate('category', 'name slug')
+      : null;
 
     if (!product) {
-      product = await Product.findOne({ slug: identifier }).populate('category', 'name slug');
+      product = await Product.findOne({ slug: identifier.toLowerCase() }).populate('category', 'name slug');
     }
 
-    if (!product) {
+    // Hidden products behave as "not found" for shoppers and search engines.
+    if (!product || (!product.isActive && req.user?.role !== 'admin')) {
       res.status(404).json({ success: false, message: 'Product not found' });
       return;
     }
@@ -78,30 +82,27 @@ export const getProductBySlugOrId = async (
 };
 
 export const createProduct = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, slug, description, price, unit, stockQuantity, imageUrl, categoryId, badge, isActive } = req.body;
-
-    const computedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const data = toUpdate(req.body);
+    if (typeof data.name !== 'string' || !data.name.trim()) {
+      res.status(400).json({ success: false, message: 'Product name is required' });
+      return;
+    }
 
     const product = await Product.create({
-      name,
-      slug: computedSlug,
-      description,
-      price: Number(price),
-      unit: unit || 'kg',
-      stockQuantity: Number(stockQuantity) || 0,
-      imageUrl: imageUrl || '/images/red-chili-powder.jpg',
-      category: categoryId,
-      badge,
-      isActive: isActive !== undefined ? isActive : true,
+      unit: 'kg',
+      stockQuantity: 0,
+      imageUrl: '/images/red-chili-powder.jpg',
+      isActive: true,
+      ...data,
+      slug: data.slug || slugify(data.name),
     });
 
     const populated = await product.populate('category', 'name slug');
-
     emitProductsChanged();
     res.status(201).json({ success: true, data: populated });
   } catch (error) {
@@ -110,20 +111,12 @@ export const createProduct = async (
 };
 
 export const updateProduct = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
-    const updateData = { ...req.body };
-
-    if (updateData.categoryId) {
-      updateData.category = updateData.categoryId;
-      delete updateData.categoryId;
-    }
-
-    const product = await Product.findByIdAndUpdate(id, updateData, {
+    const product = await Product.findByIdAndUpdate(req.params.id, toUpdate(req.body), {
       new: true,
       runValidators: true,
     }).populate('category', 'name slug');
@@ -141,14 +134,12 @@ export const updateProduct = async (
 };
 
 export const deleteProduct = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
-    const product = await Product.findByIdAndDelete(id);
-
+    const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       res.status(404).json({ success: false, message: 'Product not found' });
       return;

@@ -31,9 +31,29 @@ export const errorHandler = (
       .join(', ');
   }
 
+  // Upload errors (file too large, wrong field) and file-type rejections are client errors
+  if (err.name === 'MulterError' || /Only image files/.test(message)) {
+    statusCode = 400;
+    if ((err as { code?: unknown }).code === 'LIMIT_FILE_SIZE') message = 'Image must be smaller than 5 MB.';
+  }
+
+  // Malformed JSON body
+  if (err.name === 'SyntaxError' && (err as { type?: string }).type === 'entity.parse.failed') {
+    statusCode = 400;
+    message = 'Invalid request body.';
+  }
+
+  if (statusCode >= 500) {
+    console.error('[Error]', err);
+    // Never leak internal error details to clients in production (unless written for the customer)
+    if (process.env.NODE_ENV === 'production' && !(err as { expose?: boolean }).expose) {
+      message = 'Something went wrong. Please try again.';
+    }
+  }
+
   // Handle Mongoose CastError (invalid ObjectId)
   if (err.name === 'CastError') {
-    statusCode = 400;
+    statusCode = 404;
     message = 'Resource not found or invalid ID format';
   }
 

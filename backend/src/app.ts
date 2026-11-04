@@ -1,6 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import path from 'path';
 import cors from 'cors';
+import compression from 'compression';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { corsOriginDelegate } from './config/cors';
@@ -17,10 +18,16 @@ import notificationRoutes from './routes/notificationRoutes';
 import statsRoutes from './routes/statsRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import customerRoutes from './routes/customerRoutes';
+import couponRoutes from './routes/couponRoutes';
+import settingsRoutes from './routes/settingsRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 export const createApp = (): Application => {
   const app = express();
+
+  // Render / Vercel sit behind one proxy hop: needed for real client IPs (rate limiting) and https URLs.
+  app.set('trust proxy', 1);
+  app.disable('x-powered-by');
 
   // Security and HTTP headers (permits cross-origin loading of images like screenshots)
   app.use(
@@ -29,8 +36,11 @@ export const createApp = (): Application => {
     })
   );
 
-  // Serve static files from uploads folder
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  // Gzip JSON responses (product lists, orders) — large win on mobile connections.
+  app.use(compression());
+
+  // Legacy: screenshots saved to disk before uploads became Cloudinary-only (kept so old links still resolve)
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), { maxAge: '7d' }));
 
   // CORS configuration (supports newpanditmasala.shop, Vercel deployments, CLIENT_URL, localhost)
   app.use(
@@ -48,8 +58,8 @@ export const createApp = (): Application => {
   }
 
   // Body parsers
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: '200kb' }));
+  app.use(express.urlencoded({ extended: true, limit: '200kb' }));
 
   // Root welcome endpoint
   app.get('/', (_req: Request, res: Response) => {
@@ -72,6 +82,8 @@ export const createApp = (): Application => {
   app.use('/api/stats', statsRoutes);
   app.use('/api/upload', uploadRoutes);
   app.use('/api/customers', customerRoutes);
+  app.use('/api/coupons', couponRoutes);
+  app.use('/api/settings', settingsRoutes);
 
   // 404 Route Handler
   app.use((_req: Request, res: Response) => {

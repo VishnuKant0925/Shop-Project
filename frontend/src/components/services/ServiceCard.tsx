@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Service } from '@/types';
 import styles from './ServiceCard.module.css';
 
@@ -37,15 +38,15 @@ export default function ServiceCard({ service, index = 0 }: ServiceCardProps) {
 
   // Typing animation for features
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || service.features.length === 0) return;
 
-    const feature = service.features[currentFeatureIndex];
+    const feature = service.features[currentFeatureIndex % service.features.length];
+    const timers: ReturnType<typeof setTimeout>[] = [];
     let charIndex = 0;
-    setIsTyping(true);
-    setTypedText('');
 
-    // Typing phase
+    // Typing phase (the first tick clears the previous text)
     const typeInterval = setInterval(() => {
+      if (charIndex === 0) setIsTyping(true);
       if (charIndex <= feature.length) {
         setTypedText(feature.substring(0, charIndex));
         charIndex++;
@@ -54,11 +55,11 @@ export default function ServiceCard({ service, index = 0 }: ServiceCardProps) {
         setIsTyping(false);
 
         // Pause, then erase
-        setTimeout(() => {
+        timers.push(setTimeout(() => {
           let eraseIndex = feature.length;
           setIsTyping(true);
 
-          const eraseInterval = setInterval(() => {
+          const eraseInterval: ReturnType<typeof setInterval> = setInterval(() => {
             if (eraseIndex >= 0) {
               setTypedText(feature.substring(0, eraseIndex));
               eraseIndex--;
@@ -68,11 +69,15 @@ export default function ServiceCard({ service, index = 0 }: ServiceCardProps) {
               setCurrentFeatureIndex((prev) => (prev + 1) % service.features.length);
             }
           }, 30);
-        }, 2000);
+          timers.push(eraseInterval);
+        }, 2000));
       }
     }, 60);
 
-    return () => clearInterval(typeInterval);
+    return () => {
+      clearInterval(typeInterval);
+      timers.forEach((t) => clearTimeout(t));
+    };
   }, [isVisible, currentFeatureIndex, service.features]);
 
   return (
@@ -86,7 +91,7 @@ export default function ServiceCard({ service, index = 0 }: ServiceCardProps) {
         <div className={styles.imageSection}>
           <Image
             src={service.imageUrl}
-            alt={service.name}
+            alt={`${service.name} at New Pandit Mill`}
             width={600}
             height={400}
             className={styles.image}
@@ -132,13 +137,13 @@ export default function ServiceCard({ service, index = 0 }: ServiceCardProps) {
               <span className={styles.rateValue}>{service.rate}</span>
               <span className={styles.rateUnit}>{service.rateUnit}</span>
             </div>
-            <a href="/contact" className={styles.ctaBtn}>
+            <Link href="/contact" className={styles.ctaBtn}>
               <span>Get Service</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

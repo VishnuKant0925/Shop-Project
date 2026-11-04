@@ -1,20 +1,43 @@
-'use client';
-
-import React, { useState, useEffect, useRef } from 'react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { products, services, formatCurrency } from '@/data';
-import ProductCard from '@/components/products/ProductCard';
-import ServiceCard from '@/components/services/ServiceCard';
+import YieldCalculator from './_components/YieldCalculator';
+import FeaturedProducts from './_components/FeaturedProducts';
+import MillRatesTicker from './_components/MillRatesTicker';
 import styles from './page.module.css';
 
-const millRates = [
-  { labelEn: 'Yellow Mustard Oil:', price: '₹172/L' },
-  { labelEn: 'Black Mustard Oil:', price: '₹158/L' },
-  { labelEn: 'Turmeric Grinding:', price: '₹18/kg' },
-  { labelEn: 'Chilli Grinding:', price: '₹22/kg' },
-  { labelEn: 'Fresh Chakki Atta:', price: '₹6/kg' },
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
+
+const faqs = [
+  {
+    q: 'Is your mustard oil really cold-pressed (Kachi Ghani)?',
+    a: 'Yes. Our mustard oil is extracted in a traditional kohlu below 38°C with no heat, chemicals, solvents or blending, so it keeps its natural pungency, aroma and nutrients.',
+  },
+  {
+    q: 'Can I bring my own mustard seeds, wheat or spices for milling?',
+    a: 'Yes. Bring your harvest to our mill at Vaishali Bus Stand Road, Lalganj. We weigh it on Govt-stamped digital scales and mill it in front of you. You keep the pure oil and the oil cake (khali).',
+  },
+  {
+    q: 'How do I pay for an online order?',
+    a: 'Add products to your cart, place the order and pay instantly via any UPI app by scanning our QR code. Upload the payment screenshot and we prepare your order for pickup.',
+  },
+  {
+    q: 'What are your mill timings?',
+    a: 'The mill is open every day, Monday to Sunday, from 8:00 AM to 9:00 PM. Call +91 99347 87476 for live rates.',
+  },
 ];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
 
 const pillars = [
   {
@@ -49,86 +72,112 @@ const testimonials = [
     name: 'Radhe Shyam Halwai',
     role: 'Bikaner Sweets • Commercial Partner',
     initial: 'R',
-    bgColor: '#fef3c7',
-    textColor: '#78350f',
   },
   {
     quote: '"Every harvest I bring 3 quintals of mustard from our fields. Pandit ji mills it before my eyes in 45 minutes. The digital scale slip matches my weight exactly."',
     name: 'Manoj Tyagi',
     role: 'Farmer • Custom Expelling User',
     initial: 'M',
-    bgColor: '#ffedd5',
-    textColor: '#7c2d12',
   },
   {
     quote: '"The aroma of their slow-ground Salem Turmeric and Teja Chilli is incomparable to packet spices. Freshly milled spices make home cooking truly healthy."',
     name: 'Sunita Devi',
     role: 'Monthly Retail Customer',
     initial: 'S',
-    bgColor: '#fef3c7',
-    textColor: '#78350f',
   },
 ];
 
-const calcWeights = [10, 25, 50, 100];
-
 export default function HomePage() {
-  const [selectedWeight, setSelectedWeight] = useState(50);
-  const [callbackForm, setCallbackForm] = useState({ name: '', phone: '', message: '' });
-  const [callbackSubmitted, setCallbackSubmitted] = useState(false);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const [statsVisible, setStatsVisible] = useState(false);
-
-  // Stats counter animation
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setStatsVisible(true);
-      },
-      { threshold: 0.5 }
-    );
-    if (statsRef.current) observer.observe(statsRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const oilYield = (selectedWeight * 0.33).toFixed(1);
-  const cakeYield = (selectedWeight * 0.66).toFixed(1);
-
-  const handleCallbackSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCallbackSubmitted(true);
-    setTimeout(() => setCallbackSubmitted(false), 3000);
-    setCallbackForm({ name: '', phone: '', message: '' });
-  };
-
   return (
     <>
-      {/* ── Mandi Rates Ticker ── */}
-      <section className={styles.ticker}>
-        <div className={styles.tickerInner}>
-          <div className={styles.tickerItems}>
-            <span className={styles.tickerLabel}>
-              <span className={styles.tickerDot}></span>
-              Today&apos;s Mill Rates:
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+
+      {/* ── Hero ── */}
+      <section className={styles.hero}>
+        <div className={styles.heroInner}>
+          <div className={styles.heroText}>
+            <span className={styles.gatewayBadge}>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '15px' }}>verified</span>
+              FSSAI Certified • Since 1984
             </span>
-            {millRates.map((rate, i) => (
-              <span key={i} className={styles.tickerRate}>
-                <strong>{rate.labelEn}</strong>{' '}
-                <span className={styles.tickerPrice}>{rate.price}</span>
+            <h1 className={styles.heroTitle}>
+              Pure <span className={styles.heroHighlight}>Kachi Ghani</span> Mustard Oil &amp; Stone-Ground Spices
+            </h1>
+            <p className={styles.heroSubtitle}>
+              Freshly cold-pressed oil and slow-milled turmeric, chilli and coriander from our mill in Lalganj, Vaishali.
+              Zero chemicals, zero blending — straight from the mill to your kitchen.
+            </p>
+            <div className={styles.heroActions}>
+              <Link href="/products" className={styles.heroPrimary}>
+                <span className="material-symbols-outlined" aria-hidden="true">storefront</span>
+                Shop Now
+              </Link>
+              <Link href="/services" className={styles.heroSecondary}>
+                Book Milling
+                <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+              </Link>
+            </div>
+            <ul className={styles.heroTrust}>
+              <li>
+                <span className="material-symbols-outlined icon-filled" aria-hidden="true">star</span>
+                <strong>4.9</strong> rated
+              </li>
+              <li>
+                <span className="material-symbols-outlined" aria-hidden="true">verified_user</span>
+                0% adulteration
+              </li>
+              <li>
+                <span className="material-symbols-outlined" aria-hidden="true">scale</span>
+                Govt. stamped scales
+              </li>
+            </ul>
+          </div>
+          <div className={styles.heroMedia}>
+            <div className={styles.heroImageWrap}>
+              <Image
+                src="/images/hero-banner.jpg"
+                alt="Freshly cold-pressed mustard oil and stone-ground spices at New Pandit Mill"
+                fill
+                priority
+                fetchPriority="high"
+                sizes="(max-width: 900px) 100vw, 50vw"
+                className={styles.heroImage}
+              />
+            </div>
+            <div className={`${styles.heroFloat} ${styles.heroFloatTop}`}>
+              <span className={styles.heroFloatIcon} aria-hidden="true">🫙</span>
+              <span>
+                <strong>Cold-pressed</strong>
+                <small>below 38°C</small>
               </span>
-            ))}
+            </div>
+            <div className={`${styles.heroFloat} ${styles.heroFloatBottom}`}>
+              <span className={styles.heroFloatIcon} aria-hidden="true">🌶️</span>
+              <span>
+                <strong>Milled daily</strong>
+                <small>on stone chakki</small>
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Hero / Dual Gateway Section ── */}
+      {/* ── Mandi Rates Ticker ── */}
+      <MillRatesTicker />
+
+      <FeaturedProducts />
+
+      {/* ── Dual Gateway Section ── */}
       <section className={styles.gateway}>
         <div className={styles.gatewayHeader}>
           <span className={styles.gatewayBadge}>
             <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>verified</span>
-            Direct Farm-to-Mill Gateway
+            Shop or Mill With Us
           </span>
-          <h1 className={styles.gatewayTitle}>How Can We Serve You Today?</h1>
+          <h2 className={styles.gatewayTitle}>How Can We Serve You Today?</h2>
           <p className={styles.gatewaySubtitle}>
             Choose your journey: Order freshly packaged 100% pure cold-pressed goods, or book custom stone-grinding and oil extraction slots for your own produce.
           </p>
@@ -140,7 +189,7 @@ export default function HomePage() {
             <div className={styles.gatewayCardImage}>
               <Image
                 src="/images/mustard-oil.jpg"
-                alt="Pure Mill Products"
+                alt="Cold-pressed mustard oil bottles from New Pandit Mill"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className={styles.gatewayCardImg}
@@ -201,7 +250,7 @@ export default function HomePage() {
             <div className={styles.gatewayCardImage}>
               <Image
                 src="/images/flour-milling.jpg"
-                alt="Milling Services"
+                alt="Stone chakki flour milling service"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className={styles.gatewayCardImg}
@@ -275,7 +324,7 @@ export default function HomePage() {
                 <div className={styles.pillarIcon}>
                   <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>{pillar.icon}</span>
                 </div>
-                <h4 className={styles.pillarTitle}>{pillar.title}</h4>
+                <h3 className={styles.pillarTitle}>{pillar.title}</h3>
                 <p className={styles.pillarDesc}>{pillar.desc}</p>
               </div>
             ))}
@@ -293,39 +342,7 @@ export default function HomePage() {
               Planning to bring your harvest? Select your mustard seed batch size to calculate expected cold-pressed oil and cattle-feed cake yield:
             </p>
 
-            <div className={styles.calcCard}>
-              <span className={styles.calcLabel}>Select Raw Seed Weight:</span>
-              <div className={styles.calcPills}>
-                {calcWeights.map((w) => (
-                  <button
-                    key={w}
-                    className={`${styles.calcPill} ${selectedWeight === w ? styles.calcPillActive : ''}`}
-                    onClick={() => setSelectedWeight(w)}
-                  >
-                    {w} kg
-                  </button>
-                ))}
-              </div>
-              <div className={styles.calcResults}>
-                <div className={styles.calcResult}>
-                  <span className={styles.calcResultLabel}>Estimated Pure Oil</span>
-                  <span className={styles.calcResultValue}>{oilYield} L</span>
-                  <span className={styles.calcResultSub}>~33% Extraction</span>
-                </div>
-                <div className={styles.calcResult}>
-                  <span className={styles.calcResultLabel}>Fresh Oil Cake (खली)</span>
-                  <span className={`${styles.calcResultValue} ${styles.calcResultSecondary}`}>{cakeYield} kg</span>
-                  <span className={styles.calcResultSub}>~66% Cattle Feed</span>
-                </div>
-              </div>
-              <div className={styles.calcFooter}>
-                <span className={styles.calcFooterItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-primary)' }}>schedule</span>
-                  Processing Time: ~{Math.round(selectedWeight * 0.5)} mins
-                </span>
-                <a href="tel:+919934787476" className={styles.calcFooterLink}>Book Slot →</a>
-              </div>
-            </div>
+            <YieldCalculator />
           </div>
           <div className={styles.calculatorRight}>
             <div className={styles.calcImgWrapper}>
@@ -375,16 +392,16 @@ export default function HomePage() {
             <div className={`${styles.certIconBox}`}>
               <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>health_and_safety</span>
             </div>
-            <h4 className={styles.certTitle}>Food Safety and Standards Authority of India</h4>
+            <h3 className={styles.certTitle}>Food Safety and Standards Authority of India</h3>
             <div className={styles.certDetails}>
               <p><strong>Categories:</strong> Cat. 02 (Fats &amp; Oils) &amp; Cat. 04 (Spices &amp; Chakki Milling)</p>
               <p>Zero mineral oil, zero chemical bleaching, unadulterated edible oil processing certified with annual safety audit.</p>
             </div>
             <div className={styles.certCTAWrapper}>
-              <a href="#" className={styles.certCTA}>
+              <Link href="/contact" className={styles.certCTA}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>description</span>
-                View Certificate (PDF)
-              </a>
+                Request Certificate
+              </Link>
             </div>
           </div>
 
@@ -400,16 +417,16 @@ export default function HomePage() {
             <div className={`${styles.certIconBox} ${styles.certIconBoxSecondary}`}>
               <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>scale</span>
             </div>
-            <h4 className={styles.certTitle}>Dept. of Legal Metrology Govt. Stamped Scales</h4>
+            <h3 className={styles.certTitle}>Dept. of Legal Metrology Govt. Stamped Scales</h3>
             <div className={styles.certDetails}>
               <p><strong>Inspection:</strong> Annual physical verification &amp; electronic tamper-seal stamping.</p>
               <p>True zero-tare digital load cells. Printed digital weigh-bridge slips provided with every farmer or retail bag.</p>
             </div>
             <div className={styles.certCTAWrapper}>
-              <a href="#" className={`${styles.certCTA} ${styles.certCTASecondary}`}>
+              <Link href="/contact" className={`${styles.certCTA} ${styles.certCTASecondary}`}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified</span>
-                Verify Scale Stamping
-              </a>
+                Request Scale Verification
+              </Link>
             </div>
           </div>
 
@@ -425,16 +442,16 @@ export default function HomePage() {
             <div className={`${styles.certIconBox} ${styles.certIconBoxAmber}`}>
               <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>science</span>
             </div>
-            <h4 className={styles.certTitle}>National Quality Agmark Standardization</h4>
+            <h3 className={styles.certTitle}>National Quality Agmark Standardization</h3>
             <div className={styles.certDetails}>
               <p><strong>Compliance:</strong> FSSAI Regulation 2.2.1 compliant.</p>
               <p>Batch-tested for 0% Argemone oil, zero synthetic colorants in chili &amp; turmeric, raw moisture &lt;8.5%.</p>
             </div>
             <div className={styles.certCTAWrapper}>
-              <a href="#" className={`${styles.certCTA} ${styles.certCTAAmber}`}>
+              <Link href="/contact" className={`${styles.certCTA} ${styles.certCTAAmber}`}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>fact_check</span>
-                View Batch Lab Report
-              </a>
+                Request Batch Lab Report
+              </Link>
             </div>
           </div>
         </div>
@@ -450,7 +467,7 @@ export default function HomePage() {
             </div>
             <div className={styles.ratingRow}>
               {[...Array(5)].map((_, i) => (
-                <span key={i} className="material-symbols-outlined" style={{ fontSize: '18px', color: '#f59e0b', fontVariationSettings: "'FILL' 1" }}>star</span>
+                <span key={i} className="material-symbols-outlined icon-filled" aria-hidden="true" style={{ fontSize: '18px', color: 'var(--color-star)' }}>star</span>
               ))}
               <span className={styles.ratingText}>4.9 / 5 (3,280+ Reviews)</span>
             </div>
@@ -460,7 +477,7 @@ export default function HomePage() {
               <div key={i} className={styles.testimonialCard}>
                 <p className={styles.testimonialQuote}>{t.quote}</p>
                 <div className={styles.testimonialAuthor}>
-                  <div className={styles.testimonialAvatar} style={{ background: t.bgColor, color: t.textColor }}>
+                  <div className={styles.testimonialAvatar} aria-hidden="true">
                     {t.initial}
                   </div>
                   <div>
@@ -469,6 +486,22 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className={styles.faqSection} aria-labelledby="faq-heading">
+        <div className={styles.faqInner}>
+          <span className={styles.pillarsAccent}>Good To Know</span>
+          <h2 id="faq-heading" className={styles.pillarsTitle}>Frequently Asked Questions</h2>
+          <div className={styles.faqList}>
+            {faqs.map((f) => (
+              <details key={f.q} className={styles.faqItem}>
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
             ))}
           </div>
         </div>

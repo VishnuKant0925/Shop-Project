@@ -13,6 +13,10 @@ const navItems = [
   { href: '/admin/orders', icon: '🛒', label: 'Customer Orders', badge: null },
   { href: '/admin/services', icon: '⚙️', label: 'Mill Services', badge: null },
   { href: '/admin/customers', icon: '👥', label: 'Customers & CRM', badge: null },
+  { href: '/admin/enquiries', icon: '📞', label: 'Enquiries', badge: null },
+  { href: '/admin/categories', icon: '🗂️', label: 'Categories', badge: null },
+  { href: '/admin/coupons', icon: '🏷️', label: 'Coupons & Offers', badge: null },
+  { href: '/admin/settings', icon: '🛠️', label: 'Store Settings', badge: null },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -61,6 +65,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (pathname.startsWith('/admin/orders')) return 'Order Fulfillment & Review';
     if (pathname.startsWith('/admin/services')) return 'Milling & Expelling Services';
     if (pathname.startsWith('/admin/customers')) return 'Customer Directory & CRM';
+    if (pathname.startsWith('/admin/enquiries')) return 'Enquiries & Callbacks';
+    if (pathname.startsWith('/admin/categories')) return 'Product Categories';
+    if (pathname.startsWith('/admin/coupons')) return 'Coupons & Offers';
+    if (pathname.startsWith('/admin/settings')) return 'Store Settings';
     return 'Admin Panel';
   };
 

@@ -1,9 +1,16 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { formatPhone, telHref, useSettings } from '@/context/SettingsContext';
 import styles from './Footer.module.css';
 
 export default function Footer() {
+  const { settings } = useSettings();
+  const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' +
+    encodeURIComponent(`${settings.storeName}, ${settings.address}`);
+
   return (
     <footer className={styles.footer}>
       <div className={styles.footerInner}>
@@ -14,7 +21,7 @@ export default function Footer() {
               <div className={styles.brandLogoBox}>
                 <Image
                   src="/images/logo.jpeg"
-                  alt="New Pandit Logo"
+                  alt=""
                   width={32}
                   height={32}
                   className={styles.brandLogoImg}
@@ -31,37 +38,44 @@ export default function Footer() {
           </div>
 
           {/* Col 2: Products */}
-          <div className={styles.footerCol}>
-            <h4 className={styles.colTitle}>Our Pure Products</h4>
+          <nav className={styles.footerCol} aria-label="Products">
+            <h2 className={styles.colTitle}>Our Pure Products</h2>
             <ul className={styles.colLinks}>
               <li><Link href="/products/mustard-oil">Kachi Ghani Mustard Oil</Link></li>
-              <li><Link href="/products">Stone-Ground Turmeric &amp; Chilli Powder</Link></li>
+              <li><Link href="/products/turmeric-powder">Stone-Ground Turmeric Powder</Link></li>
+              <li><Link href="/products/red-chili-powder">Red Chilli Powder</Link></li>
               <li><Link href="/products/coriander-powder">Coriander Powder</Link></li>
-              <li><Link href="/products">Fresh Rolled Poha/Chiwra</Link></li>
+              <li><Link href="/services">Custom Milling Services</Link></li>
             </ul>
-          </div>
+          </nav>
 
           {/* Col 3: Mill Yard & Hours */}
           <div className={styles.footerCol}>
-            <h4 className={styles.colTitle}>Mill Yard &amp; Hours</h4>
-            <p className={styles.colText}>
-              Vaishali Bus Stand Road,<br />Lalganj 844121, Vaishali, Bihar
-            </p>
-            <p className={styles.colTextBold}>Mon - Sun: 8:00 AM - 9:00 PM</p>
-            {/* <p className={styles.colTextAccent}>Sunday: Bulk Wholesale Dispatch Only</p> */}
+            <h2 className={styles.colTitle}>Mill Yard &amp; Hours</h2>
+            <address className={styles.colText}>
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.inlineLink}>
+                {settings.address}
+              </a>
+            </address>
+            <p className={styles.colTextBold}>{settings.hours}</p>
           </div>
 
-          {/* Col 4: Contact & ERP */}
+          {/* Col 4: Contact */}
           <div className={styles.footerCol}>
-            <h4 className={styles.colTitle}>Direct Helpdesk</h4>
-            <p className={styles.colPhone}>+91 9934787476</p>
-            <p className={styles.colPhone}>+91 8226889960</p>
+            <h2 className={styles.colTitle}>Direct Helpdesk</h2>
+            {settings.phones.map((phone) => (
+              <a key={phone} href={telHref(phone)} className={styles.colPhone}>{formatPhone(phone)}</a>
+            ))}
+            <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '16px' }}>chat</span>
+              Chat on WhatsApp
+            </a>
             <p className={styles.colText}>
               Speak directly to the mill manager for live rate enquiries.
             </p>
             <Link href="/auth/login" className={styles.erpLink}>
-              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>lock</span>
-              <span>Operator &amp; Staff ERP Login</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '15px' }}>lock</span>
+              <span>Operator &amp; Staff Login</span>
             </Link>
           </div>
         </div>
@@ -70,11 +84,11 @@ export default function Footer() {
         <div className={styles.copyright}>
           <p>© {new Date().getFullYear()} New Pandit Masala &amp; Tel Mill. All Rights Reserved.</p>
           <div className={styles.copyrightLinks}>
-            <Link href="#">FSSAI Compliance</Link>
-            <span>•</span>
-            <Link href="#">Agmark Standard</Link>
-            <span>•</span>
-            <Link href="#">Terms of Service</Link>
+            <Link href="/products">Store</Link>
+            <span aria-hidden="true">•</span>
+            <Link href="/services">Services</Link>
+            <span aria-hidden="true">•</span>
+            <Link href="/contact">Contact</Link>
           </div>
         </div>
       </div>

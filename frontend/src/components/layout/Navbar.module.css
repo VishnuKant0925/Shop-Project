@@ -1,36 +1,32 @@
 /* ===========================
-   NAVBAR — Stitch Clean Portal Style
+   NAVBAR
    =========================== */
 
 .header {
   position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: var(--z-sticky);
-  background: rgba(252, 251, 249, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-outline);
-  transition: all var(--transition-base);
+  background: var(--color-header-bg);
+  backdrop-filter: saturate(160%) blur(16px);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .header.scrolled {
-  background: rgba(252, 251, 249, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border-bottom-color: var(--color-outline);
   box-shadow: var(--shadow-sm);
 }
 
 .headerInner {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 var(--space-6);
-  height: 5rem;
+  padding: 0 var(--container-padding);
+  height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 /* ── Brand ── */
@@ -38,31 +34,26 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  text-decoration: none;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .brand:hover .brandName {
   color: var(--color-primary);
 }
 
-.brand:hover .logoBox {
-  border-color: var(--color-primary-container);
-}
-
 .logoBox {
   width: 2.75rem;
   height: 2.75rem;
   border-radius: var(--radius-md);
-  background: var(--color-surface-container-lowest);
+  background: #fff;
   border: 1px solid var(--color-outline);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.25rem;
-  box-shadow: var(--shadow-xs);
-  transition: border-color var(--transition-base);
+  padding: 0.2rem;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .logoImg {
@@ -74,15 +65,16 @@
 .brandText {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .brandName {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1.125rem;
-  line-height: 1.2;
+  line-height: 1.15;
   color: var(--color-on-surface);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   transition: color var(--transition-base);
 }
 
@@ -92,56 +84,51 @@
   color: var(--color-primary);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* ── Desktop Nav ── */
 .desktopNav {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-full);
 }
 
 .navLink {
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-on-surface-variant);
-  text-decoration: none;
-  position: relative;
-  padding: var(--space-2) 0;
-  transition: color var(--transition-base);
-}
-
-.navLink::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%) scaleX(0);
-  width: 20px;
-  height: 2px;
-  background: var(--color-primary);
+  padding: 0.5rem 1rem;
   border-radius: var(--radius-full);
-  transition: transform var(--transition-base);
+  transition: color var(--transition-fast), background var(--transition-fast);
 }
 
 .navLink:hover {
-  color: var(--color-primary);
+  color: var(--color-on-surface);
+  background: var(--color-surface-container);
 }
 
-.navLink:hover::after {
-  transform: translateX(-50%) scaleX(1);
+.navLinkActive,
+.navLinkActive:hover {
+  color: var(--color-primary);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ── Actions ── */
 .actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
-.cartBtn {
+.iconBtn {
   position: relative;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.5rem;
@@ -150,90 +137,66 @@
   background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   color: var(--color-on-surface);
-  transition: all var(--transition-base);
-  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-base), color var(--transition-base), transform var(--transition-fast);
 }
 
-.cartBtn:hover {
+.iconBtn :global(.material-symbols-outlined) {
+  font-size: 20px;
+}
+
+.iconBtn:hover {
   border-color: var(--color-primary-container);
   color: var(--color-primary);
 }
 
-.cartBadge {
+.iconBtn:active {
+  transform: scale(0.94);
+}
+
+.badge {
   position: absolute;
   top: -4px;
   right: -4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 1rem;
-  height: 1rem;
+  min-width: 1.125rem;
+  height: 1.125rem;
   padding: 0 4px;
   font-size: 0.625rem;
   font-weight: 700;
-  color: white;
-  background: var(--color-secondary);
+  color: #fff;
+  background: var(--color-secondary-container);
+  border: 2px solid var(--color-surface);
   border-radius: var(--radius-full);
-  animation: scaleIn var(--transition-spring);
+  animation: badgePop var(--transition-spring);
 }
 
-/* ── Notification Bell ── */
+.badgeAlert {
+  background: #dc2626;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+/* ── Notifications ── */
 .notifContainer {
   position: relative;
 }
 
-.notifBtn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-lowest);
-  border: 1px solid var(--color-outline);
-  color: var(--color-on-surface);
-  transition: all var(--transition-base);
-  box-shadow: var(--shadow-xs);
-  cursor: pointer;
-}
-
-.notifBtn:hover {
-  border-color: var(--color-primary-container);
-  color: var(--color-primary);
-}
-
-.notifBadge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1rem;
-  height: 1rem;
-  padding: 0 4px;
-  font-size: 0.575rem;
-  font-weight: 700;
-  color: white;
-  background: #DC2626;
-  border-radius: var(--radius-full);
-  animation: scaleIn 0.2s ease-out;
-}
-
 .notifDropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
   width: 360px;
-  max-height: 420px;
-  background: white;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   border-radius: var(--radius-lg);
-  box-shadow: 0 20px 50px rgba(31, 29, 26, 0.15), 0 8px 16px rgba(31, 29, 26, 0.08);
+  box-shadow: var(--shadow-xl);
   z-index: var(--z-modal);
   overflow: hidden;
-  animation: fadeInDown 0.2s ease-out;
+  animation: dropIn 0.18s ease-out;
 }
 
 .notifHeader {
@@ -245,32 +208,27 @@
 }
 
 .notifHeader h3 {
-  font-family: var(--font-heading);
   font-size: 0.9375rem;
   font-weight: 700;
-  color: var(--color-on-surface);
-  margin: 0;
 }
 
 .notifMarkAll {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
 }
 
 .notifMarkAll:hover {
-  background: rgba(232, 87, 29, 0.08);
+  background: var(--color-primary-light);
 }
 
 .notifList {
-  max-height: 340px;
+  max-height: min(360px, 60vh);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .notifEmpty {
@@ -284,18 +242,19 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  width: 100%;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid var(--color-outline-variant);
   transition: background var(--transition-fast);
 }
 
 .notifItem:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--color-surface-container-low);
 }
 
 .notifItemUnread {
-  background: rgba(232, 87, 29, 0.04);
+  background: var(--color-primary-soft);
 }
 
 .notifItemIcon {
@@ -305,6 +264,8 @@
 }
 
 .notifItemContent {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
 }
@@ -325,8 +286,7 @@
 
 .notifItemTime {
   font-size: 0.6875rem;
-  color: var(--color-on-surface-variant);
-  opacity: 0.7;
+  color: var(--color-text-light);
   margin-top: 4px;
 }
 
@@ -344,22 +304,24 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
+  height: 2.5rem;
+  padding: 0 0.875rem;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, var(--color-primary), #d4561a);
-  border: none;
-  text-decoration: none;
-  transition: all var(--transition-base);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(232, 87, 29, 0.25);
+  color: #fff;
+  background: var(--gradient-primary);
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.25);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.adminPanelBtn :global(.material-symbols-outlined) {
+  font-size: 18px;
 }
 
 .adminPanelBtn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(232, 87, 29, 0.35);
+  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
 }
 
 /* ── User Menu ── */
@@ -370,21 +332,33 @@
 .userBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem 0 0.25rem;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-on-surface);
   background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
-  text-decoration: none;
-  transition: all var(--transition-base);
-  cursor: pointer;
+  transition: border-color var(--transition-base);
 }
 
 .userBtn:hover {
-  background: var(--color-surface-container-low);
+  border-color: var(--color-primary-container);
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .userName {
@@ -396,16 +370,17 @@
 
 .userDropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  width: 220px;
-  background: white;
+  width: 240px;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   border-radius: var(--radius-lg);
-  box-shadow: 0 20px 50px rgba(31, 29, 26, 0.15), 0 8px 16px rgba(31, 29, 26, 0.08);
+  box-shadow: var(--shadow-xl);
   z-index: var(--z-modal);
   overflow: hidden;
-  animation: fadeInDown 0.2s ease-out;
+  padding-bottom: 4px;
+  animation: dropIn 0.18s ease-out;
 }
 
 .userDropdownHeader {
@@ -437,16 +412,16 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 10px 16px;
-  font-size: 0.8125rem;
+  padding: 11px 16px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-on-surface);
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: background var(--transition-fast);
   text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.userDropdownLink :global(.material-symbols-outlined) {
+  font-size: 19px;
 }
 
 .userDropdownLink:hover {
@@ -454,190 +429,109 @@
   color: var(--color-primary);
 }
 
-.adminBtn {
+.loginBtn {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
+  height: 2.5rem;
+  padding: 0 1rem 0 0.75rem;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-on-surface);
-  background: var(--color-surface-container-lowest);
-  border: 1px solid var(--color-outline);
-  text-decoration: none;
-  transition: all var(--transition-base);
-  cursor: pointer;
-}
-
-.adminBtn:hover {
-  background: var(--color-surface-container-low);
-}
-
-/* ── Hamburger ── */
-.hamburger {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  width: 36px;
-  height: 36px;
-  padding: 6px;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-
-.hamburger span {
-  display: block;
-  width: 100%;
-  height: 2px;
+  color: var(--color-on-primary);
   background: var(--color-on-surface);
-  border-radius: var(--radius-full);
-  transition: all var(--transition-base);
+  transition: opacity var(--transition-base);
 }
 
-.hamburger.hamburgerOpen span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+:global([data-theme='dark']) .loginBtn {
+  color: var(--color-surface);
 }
 
-.hamburger.hamburgerOpen span:nth-child(2) {
-  opacity: 0;
+.loginBtn :global(.material-symbols-outlined) {
+  font-size: 19px;
 }
 
-.hamburger.hamburgerOpen span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
-}
-
-/* ── Mobile Nav ── */
-.mobileNav {
-  position: fixed;
-  top: 0;
-  right: -100%;
-  width: 280px;
-  height: 100vh;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
-  padding: var(--space-20) var(--space-6);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-xl);
-  transition: right var(--transition-slow);
-  z-index: var(--z-modal);
-  list-style: none;
-  display: flex;
-}
-
-.mobileNav.mobileNavOpen {
-  right: 0;
-}
-
-.mobileNavLink {
-  display: block;
-  width: 100%;
-  padding: var(--space-4);
-  font-size: var(--font-size-lg);
-  font-weight: 500;
-  color: var(--color-on-surface);
-  text-decoration: none;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-base);
-}
-
-.mobileNavLink:hover {
-  color: var(--color-primary);
-  background: var(--color-surface-container-low);
-}
-
-.mobileNavButton {
-  width: 100%;
-  padding: var(--space-4);
-  color: var(--color-on-surface);
-  font-size: var(--font-size-lg);
-  font-weight: 500;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-
-.mobileNavButton:hover {
-  color: var(--color-primary);
-  background: var(--color-surface-container-low);
-}
-
-.mobileNavDivider {
-  width: 100%;
-  height: 1px;
-  background: var(--color-outline);
-  margin: var(--space-2) 0;
-}
-
-.mobileOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: calc(var(--z-modal) - 1);
+.loginBtn:hover {
+  opacity: 0.88;
 }
 
 /* ── Animations ── */
-@keyframes fadeInDown {
+@keyframes dropIn {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-6px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes scaleIn {
+@keyframes badgePop {
   from { transform: scale(0); }
   to { transform: scale(1); }
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
-  .headerInner {
-    padding: 0 var(--space-4);
-    height: 4rem;
+@media (max-width: 960px) {
+  .desktopNav {
+    gap: 0;
   }
 
-  .desktopNav {
+  .navLink {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .adminPanelLabel {
     display: none;
   }
 
   .adminPanelBtn {
-    display: none;
-  }
-
-  .userMenuContainer {
-    display: none;
-  }
-
-  .adminBtn {
-    display: none;
-  }
-
-  .hamburger {
-    display: flex;
-  }
-
-  .notifDropdown {
-    width: 300px;
-    right: -40px;
+    width: 2.5rem;
+    padding: 0;
+    justify-content: center;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+  .desktopNav,
+  .desktopOnly {
+    display: none;
+  }
+
+  .mobileOnly {
+    display: inline-flex;
+  }
+
+  .logoBox {
+    width: 2.375rem;
+    height: 2.375rem;
+  }
+
+  .brandName {
+    font-size: 1rem;
+  }
+
+  .notifContainer {
+    position: static;
+  }
+
+  /* Full-width sheet under the header on phones */
+  .notifDropdown {
+    position: fixed;
+    top: calc(var(--header-height) + 6px);
+    left: var(--space-3);
+    right: var(--space-3);
+    width: auto;
+  }
+}
+
+@media (max-width: 380px) {
   .brandTagline {
     display: none;
   }
 
-  .notifDropdown {
-    width: 280px;
-    right: -60px;
+  .actions {
+    gap: 6px;
   }
 }

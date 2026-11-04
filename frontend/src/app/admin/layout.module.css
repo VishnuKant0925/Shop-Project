@@ -37,7 +37,7 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,7 +76,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.72rem;
-  color: #D6D3D1;
+  color: var(--color-outline);
   font-weight: 600;
   margin-top: 3px;
   text-transform: uppercase;
@@ -111,7 +111,7 @@
 .navSectionLabel {
   font-size: 0.68rem;
   font-weight: 700;
-  color: #78716C;
+  color: var(--color-on-surface-variant);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 0.5rem 0.75rem 0.25rem;
@@ -124,7 +124,7 @@
   padding: 0.75rem 0.875rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #D6D3D1;
+  color: var(--color-outline);
   text-decoration: none;
   border-radius: 10px;
   transition: all 0.2s ease;
@@ -139,7 +139,7 @@
 
 .sidebarLinkActive {
   color: #FFFFFF !important;
-  background: linear-gradient(135deg, #b45309 0%, #9a3412 100%) !important;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%) !important;
   font-weight: 600;
   box-shadow: 0 4px 16px rgba(180, 83, 9, 0.4);
   border-color: rgba(255, 255, 255, 0.15);
@@ -222,7 +222,7 @@
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: #b45309;
+  background: var(--color-primary);
   color: #FFFFFF;
   font-weight: 700;
   font-size: 0.85rem;
@@ -290,7 +290,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--color-header-bg);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--color-outline);
   position: sticky;
@@ -398,7 +398,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px 10px 4px 4px;
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   border-radius: 9999px;
   cursor: pointer;
@@ -414,7 +414,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
   color: #FFFFFF;
   font-size: 0.8rem;
   font-weight: 700;
@@ -458,7 +458,7 @@
   right: 0;
   top: calc(100% + 8px);
   width: 240px;
-  background: #FFFFFF;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline);
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
@@ -523,7 +523,7 @@
   padding: 0.6rem 0.75rem;
   font-size: 0.825rem;
   font-weight: 600;
-  color: #DC2626;
+  color: var(--color-danger);
   border: none;
   background: none;
   border-radius: 8px;

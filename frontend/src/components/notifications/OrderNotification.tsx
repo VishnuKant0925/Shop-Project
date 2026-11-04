@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/context/AuthContext';
+import { getSocket } from '@/lib/socket';
 
 interface OrderNotification {
   orderId: string;
@@ -10,14 +10,11 @@ interface OrderNotification {
   status: string;
 }
 
-const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
-
 export default function OrderNotificationToast() {
   const { user } = useAuth();
   const [notification, setNotification] = useState<OrderNotification | null>(null);
   const [visible, setVisible] = useState(false);
   const [exiting, setExiting] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const dismiss = useCallback(() => {
@@ -30,20 +27,10 @@ export default function OrderNotificationToast() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      socketRef.current?.disconnect();
-      socketRef.current = null;
-      return;
-    }
+    if (!user) return;
 
-    const socket: Socket = io(SOCKET_URL, { transports: ['polling', 'websocket'] });
-    socketRef.current = socket;
-
-    socket.on('connect', () => {
-      socket.emit('join', user.id);
-    });
-
-    socket.on('order:status-changed', (data: OrderNotification) => {
+    const socket = getSocket();
+    const handleStatusChange = (data: OrderNotification) => {
       setNotification(data);
       setVisible(true);
       setExiting(false);
@@ -51,10 +38,11 @@ export default function OrderNotificationToast() {
       // Auto-dismiss after 12 seconds
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => dismiss(), 12000);
-    });
+    };
+    socket.on('order:status-changed', handleStatusChange);
 
     return () => {
-      socket.disconnect();
+      socket.off('order:status-changed', handleStatusChange);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [user, dismiss]);
@@ -93,15 +81,15 @@ export default function OrderNotificationToast() {
   return (
     <div style={{
       position: 'fixed',
-      bottom: '24px',
-      right: '24px',
+      bottom: 'calc(16px + var(--bottom-nav-height) + var(--safe-bottom))',
+      right: '16px',
       zIndex: 9999,
       maxWidth: '400px',
-      width: '100%',
-      background: '#ffffff',
-      border: '1px solid #e2ded6',
+      width: 'calc(100% - 32px)',
+      background: 'var(--color-surface-container-lowest)',
+      border: '1px solid var(--color-outline)',
       borderRadius: '16px',
-      boxShadow: '0 20px 50px rgba(31,29,26,0.18), 0 8px 16px rgba(31,29,26,0.08)',
+      boxShadow: 'var(--shadow-xl)',
       padding: '20px',
       display: 'flex',
       alignItems: 'flex-start',
@@ -112,23 +100,25 @@ export default function OrderNotificationToast() {
       <span style={{ fontSize: '2rem', flexShrink: 0 }}>{msg.emoji}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: "'Work Sans', sans-serif",
+          fontFamily: 'var(--font-heading)',
           fontWeight: 700,
           fontSize: '15px',
-          color: '#1f1d1a',
+          color: 'var(--color-on-surface)',
           marginBottom: '4px',
         }}>
           {msg.title}
         </div>
         <div style={{
           fontSize: '13px',
-          color: '#5f5b53',
+          color: 'var(--color-on-surface-variant)',
           lineHeight: 1.5,
         }}>
           {msg.body}
         </div>
       </div>
       <button
+        type="button"
+        aria-label="Dismiss notification"
         onClick={(e) => { e.stopPropagation(); dismiss(); }}
         style={{
           flexShrink: 0,
@@ -138,11 +128,11 @@ export default function OrderNotificationToast() {
           alignItems: 'center',
           justifyContent: 'center',
           border: 'none',
-          background: 'rgba(31,29,26,0.06)',
+          background: 'var(--color-surface-container)',
           borderRadius: '50%',
           cursor: 'pointer',
           fontSize: '14px',
-          color: '#5f5b53',
+          color: 'var(--color-on-surface-variant)',
         }}
       >
         ✕

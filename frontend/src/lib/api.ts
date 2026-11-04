@@ -1,4 +1,4 @@
-import { Product, Service, Category, Order, User, CallbackRequest } from '@/types';
+import { Product, Service, Category, Order, User, CallbackRequest, CallbackItem, Coupon, StoreSettings } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.newpanditmasala.shop/api';
 
@@ -16,7 +16,7 @@ interface AuthResponse extends ApiResponse {
 type DataResponse<T> = ApiResponse<T> & { data: T };
 type MessageResponse = ApiResponse & { message: string };
 
-type ApiProduct = Omit<Product, 'id' | 'categoryId'> & {
+export type ApiProduct = Omit<Product, 'id' | 'categoryId'> & {
   id?: string;
   _id?: string;
   categoryId?: string;
@@ -49,6 +49,12 @@ export interface DashboardStats {
   totalUsers: number;
   revenueChange: string;
   ordersChange: string;
+  todayOrders?: number;
+  todayRevenue?: number;
+  awaitingPayment?: number;
+  awaitingVerification?: number;
+  pendingEnquiries?: number;
+  topProducts?: { name: string; quantity: number; revenue: number }[];
   statusBreakdown: Record<string, number>;
   recentOrders: {
     id: string;
@@ -65,6 +71,15 @@ export interface DashboardStats {
     stockQuantity: number;
     unit: string;
   }[];
+}
+
+export interface Paginated<T> {
+  data: T[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+export interface AdminOrdersResult extends Paginated<Order> {
+  statusCounts: Record<string, number>;
 }
 
 export interface CustomerSummary {
@@ -145,7 +160,7 @@ const getErrorMessage = (data: unknown, fallback: string): string => {
   return fallback;
 };
 
-const normaliseProduct = (product: ApiProduct): Product => {
+export const normaliseProduct = (product: ApiProduct): Product => {
   const categoryId = product.categoryId
     || (typeof product.category === 'string'
       ? product.category
@@ -184,10 +199,13 @@ const normaliseOrder = (order: ApiOrder): Order => ({
   shippingAddress: order.shippingAddress,
   items: order.items,
   subtotal: order.subtotal,
+  discount: order.discount ?? 0,
+  couponCode: order.couponCode || '',
   tax: order.tax,
   total: order.total,
   status: order.status,
   paymentScreenshotUrl: order.paymentScreenshotUrl,
+  adminNote: order.adminNote,
   createdAt: order.createdAt,
 });
 
@@ -337,8 +355,9 @@ class ApiClient {
   }
 
   // Products
-  async getProducts(params?: { category?: string; search?: string; sort?: string }): Promise<Product[]> {
+  async getProducts(params?: { category?: string; search?: string; sort?: string; all?: boolean }): Promise<Product[]> {
     const query = new URLSearchParams();
+    if (params?.all) query.append('all', 'true');
     if (params?.category && params.category !== 'all') query.append('category', params.category);
     if (params?.search) query.append('search', params.search);
     if (params?.sort) query.append('sort', params.sort);
@@ -381,9 +400,62 @@ class ApiClient {
     return res.data.map(normaliseCategory);
   }
 
+  async createCategory(data: Partial<Category>): Promise<Category> {
+    const res = await this.request<DataResponse<ApiCategory>>('/categories', { method: 'POST', body: JSON.stringify(data) });
+    return normaliseCategory(res.data);
+  }
+
+  async updateCategory(id: string, data: Partial<Category>): Promise<Category> {
+    const res = await this.request<DataResponse<ApiCategory>>(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    return normaliseCategory(res.data);
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await this.request<ApiResponse>(`/categories/${id}`, { method: 'DELETE' });
+  }
+
+  // Store settings
+  async getSettings(): Promise<StoreSettings> {
+    const res = await this.request<DataResponse<StoreSettings>>('/settings');
+    return res.data;
+  }
+
+  async updateSettings(data: Partial<StoreSettings>): Promise<StoreSettings> {
+    const res = await this.request<DataResponse<StoreSettings>>('/settings', { method: 'PUT', body: JSON.stringify(data) });
+    return res.data;
+  }
+
+  // Coupons
+  async validateCoupon(code: string, subtotal: number): Promise<{ code: string; discount: number; description: string; message: string }> {
+    const res = await this.request<DataResponse<{ code: string; discount: number; description: string }> & { message: string }>(
+      '/coupons/validate',
+      { method: 'POST', body: JSON.stringify({ code, subtotal }) }
+    );
+    return { ...res.data, message: res.message };
+  }
+
+  async getCoupons(): Promise<Coupon[]> {
+    const res = await this.request<DataResponse<Coupon[]>>('/coupons');
+    return res.data;
+  }
+
+  async createCoupon(data: Partial<Coupon>): Promise<Coupon> {
+    const res = await this.request<DataResponse<Coupon>>('/coupons', { method: 'POST', body: JSON.stringify(data) });
+    return res.data;
+  }
+
+  async updateCoupon(id: string, data: Partial<Coupon>): Promise<Coupon> {
+    const res = await this.request<DataResponse<Coupon>>(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    return res.data;
+  }
+
+  async deleteCoupon(id: string): Promise<void> {
+    await this.request<ApiResponse>(`/coupons/${id}`, { method: 'DELETE' });
+  }
+
   // Services
-  async getServices(): Promise<Service[]> {
-    const res = await this.request<DataResponse<Service[]>>('/services');
+  async getServices(options?: { all?: boolean }): Promise<Service[]> {
+    const res = await this.request<DataResponse<Service[]>>(options?.all ? '/services?all=true' : '/services');
     return res.data;
   }
 
@@ -416,8 +488,9 @@ class ApiClient {
 
   // Orders
   async createOrder(orderData: {
-    items: { productId: string; productName: string; quantity: number; unitPrice: number }[];
+    items: { productId: string; quantity: number }[];
     notes?: string;
+    couponCode?: string;
   }): Promise<Order> {
     const res = await this.request<DataResponse<ApiOrder>>('/orders', {
       method: 'POST',
@@ -451,17 +524,30 @@ class ApiClient {
     return res.data.map(normaliseOrder);
   }
 
-  async getAllOrders(status?: string): Promise<Order[]> {
-    const query = status && status !== 'all' ? `?status=${status}` : '';
-    const res = await this.request<DataResponse<ApiOrder[]>>(`/orders${query}`);
-    return res.data.map(normaliseOrder);
+  async getAllOrders(params: { status?: string; q?: string; page?: number; limit?: number } = {}): Promise<AdminOrdersResult> {
+    const query = new URLSearchParams();
+    if (params.status && params.status !== 'all') query.append('status', params.status);
+    if (params.q?.trim()) query.append('q', params.q.trim());
+    query.append('page', String(params.page || 1));
+    query.append('limit', String(params.limit || 25));
+    const res = await this.request<DataResponse<ApiOrder[]> & Omit<AdminOrdersResult, 'data'>>(`/orders?${query}`);
+    return { data: res.data.map(normaliseOrder), pagination: res.pagination, statusCounts: res.statusCounts };
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order> {
-    const res = await this.request<DataResponse<ApiOrder>>(`/orders/${id}/status`, {
+    return this.updateOrder(id, { status });
+  }
+
+  async updateOrder(id: string, data: { status?: string; adminNote?: string }): Promise<Order> {
+    const res = await this.request<DataResponse<ApiOrder>>(`/orders/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(data),
     });
+    return normaliseOrder(res.data);
+  }
+
+  async cancelMyOrder(id: string): Promise<Order> {
+    const res = await this.request<DataResponse<ApiOrder>>(`/orders/${id}/cancel`, { method: 'POST' });
     return normaliseOrder(res.data);
   }
 
@@ -471,6 +557,23 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async getCallbacks(params: { status?: string; q?: string; page?: number } = {}): Promise<Paginated<CallbackItem> & { pendingCount: number }> {
+    const query = new URLSearchParams();
+    if (params.status && params.status !== 'all') query.append('status', params.status);
+    if (params.q?.trim()) query.append('q', params.q.trim());
+    query.append('page', String(params.page || 1));
+    return this.request(`/callbacks?${query}`);
+  }
+
+  async updateCallbackStatus(id: string, status: CallbackItem['status']): Promise<CallbackItem> {
+    const res = await this.request<DataResponse<CallbackItem>>(`/callbacks/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    return res.data;
+  }
+
+  async deleteCallback(id: string): Promise<void> {
+    await this.request<ApiResponse>(`/callbacks/${id}`, { method: 'DELETE' });
   }
 
   // Notifications

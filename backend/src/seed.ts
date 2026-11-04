@@ -10,6 +10,15 @@ import { Service } from './models/Service';
 const seedDatabase = async () => {
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/pandit_mill';
 
+  // Seeding wipes users, products, categories and services. Refuse to touch a remote
+  // (e.g. production Atlas) database unless explicitly forced.
+  const isLocal = /^mongodb:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(uri);
+  if (!isLocal && !process.argv.includes('--force-remote')) {
+    console.error('Refusing to seed a non-local database (this deletes all users and products).');
+    console.error('Point MONGODB_URI at a local database, or pass --force-remote if you really mean it.');
+    process.exit(1);
+  }
+
   try {
     console.log('Connecting to MongoDB database for seeding...');
     await mongoose.connect(uri);

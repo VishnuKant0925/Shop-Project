@@ -75,6 +75,9 @@ const ProductSchema = new Schema<IProduct>(
   }
 );
 
+ProductSchema.index({ isActive: 1, createdAt: -1 });
+ProductSchema.index({ category: 1 });
+
 // Virtual id field to align with frontend Product interface
 ProductSchema.virtual('id').get(function () {
   return this._id.toHexString();

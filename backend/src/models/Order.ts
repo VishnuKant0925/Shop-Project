@@ -19,10 +19,14 @@ export interface IOrder extends Document {
   shippingAddress: string;
   items: IOrderItem[];
   subtotal: number;
+  discount: number;
+  couponCode: string;
   tax: number;
   total: number;
   status: OrderStatus;
   paymentScreenshotUrl: string;
+  adminNote: string;
+  stockRestored: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -84,6 +88,17 @@ const OrderSchema = new Schema<IOrder>(
       required: true,
       min: 0,
     },
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    couponCode: {
+      type: String,
+      default: '',
+      uppercase: true,
+      trim: true,
+    },
     tax: {
       type: Number,
       required: true,
@@ -103,6 +118,18 @@ const OrderSchema = new Schema<IOrder>(
       type: String,
       default: '',
     },
+    // Internal note visible only in the admin panel
+    adminNote: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 500,
+    },
+    // Set when a cancelled order has had its items returned to stock (prevents double restock)
+    stockRestored: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -110,6 +137,12 @@ const OrderSchema = new Schema<IOrder>(
     toObject: { virtuals: true },
   }
 );
+
+// Customer order history, admin lists filtered by status, and date-range stats.
+OrderSchema.index({ user: 1, createdAt: -1 });
+OrderSchema.index({ status: 1, createdAt: -1 });
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ customerEmail: 1 });
 
 OrderSchema.virtual('id').get(function () {
   return this._id.toHexString();

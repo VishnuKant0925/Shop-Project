@@ -14,36 +14,32 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const { addItem, getItemQuantity } = useCart();
+  const { addItem, getItemQuantity, updateQuantity } = useCart();
   const qty = getItemQuantity(product.id);
+  const href = `/products/${product.slug}`;
+  const outOfStock = product.stockQuantity <= 0;
 
   return (
-    <div
+    <article
       className={styles.card}
-      style={{ animationDelay: `${index * 100}ms` }}
+      style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
     >
-      {product.badge && (
-        <span className={styles.badge}>{product.badge}</span>
-      )}
-
-      <Link href={`/products/${product.slug}`} className={styles.imageWrapper}>
+      <Link href={href} className={styles.imageWrapper} tabIndex={-1} aria-hidden="true">
         <Image
           src={product.imageUrl}
-          alt={product.name}
-          width={400}
-          height={400}
+          alt=""
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className={styles.image}
         />
-        <div className={styles.imageOverlay}>
-          <span>View Details</span>
-        </div>
+        {product.badge && <span className={styles.badge}>{product.badge}</span>}
       </Link>
 
       <div className={styles.content}>
-        <Link href={`/products/${product.slug}`}>
-          <h3 className={styles.name}>{product.name}</h3>
-        </Link>
-        <p className={styles.desc}>{product.description.substring(0, 80)}...</p>
+        <h3 className={styles.name}>
+          <Link href={href} className={styles.nameLink}>{product.name}</Link>
+        </h3>
+        <p className={styles.desc}>{product.description}</p>
 
         <div className={styles.footer}>
           <div className={styles.pricing}>
@@ -51,24 +47,40 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             <span className={styles.unit}>/ {product.unit}</span>
           </div>
 
-          <button
-            className={`${styles.addBtn} ${qty > 0 ? styles.addBtnActive : ''}`}
-            onClick={() => addItem(product)}
-          >
-            {qty > 0 ? (
-              <span className={styles.addBtnContent}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                In Cart ({qty})
-              </span>
-            ) : (
-              <span className={styles.addBtnContent}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add to Cart
-              </span>
-            )}
-          </button>
+          {qty > 0 ? (
+            <div className={styles.stepper} role="group" aria-label={`${product.name} quantity in cart`}>
+              <button
+                type="button"
+                className={styles.stepBtn}
+                onClick={() => updateQuantity(product.id, qty - 1)}
+                aria-label={qty === 1 ? `Remove ${product.name} from cart` : `Decrease ${product.name} quantity`}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">{qty === 1 ? 'delete' : 'remove'}</span>
+              </button>
+              <span className={styles.stepQty} aria-live="polite">{qty}</span>
+              <button
+                type="button"
+                className={styles.stepBtn}
+                onClick={() => updateQuantity(product.id, qty + 1)}
+                aria-label={`Increase ${product.name} quantity`}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">add</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={() => addItem(product)}
+              disabled={outOfStock}
+              aria-label={`Add ${product.name} to cart`}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">add</span>
+              <span className={styles.addLabel}>{outOfStock ? 'Sold out' : 'Add'}</span>
+            </button>
+          )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
@@ -98,22 +99,28 @@ export default function RegisterPage() {
             {/* 3 Images Showcase (Register Page) */}
             <div className={`${styles.imageShowcase} ${styles.imageShowcaseThree}`}>
               <div className={styles.imageFrame}>
-                <img
+                <Image
                   src="/images/login1.png"
+                  fill
+                  sizes="(max-width: 900px) 100vw, 360px"
                   alt="New Pandit Pure Stone-Ground Spices"
                   className={styles.showcaseImage}
                 />
               </div>
               <div className={styles.imageFrame}>
-                <img
+                <Image
                   src="/images/login2.png"
+                  fill
+                  sizes="(max-width: 900px) 100vw, 360px"
                   alt="New Pandit Traditional Chakki & Oil Mill"
                   className={styles.showcaseImage}
                 />
               </div>
               <div className={styles.imageFrame}>
-                <img
+                <Image
                   src="/images/login3.png"
+                  fill
+                  sizes="(max-width: 900px) 100vw, 360px"
                   alt="New Pandit Aromatic Spice Grinding"
                   className={styles.showcaseImage}
                 />

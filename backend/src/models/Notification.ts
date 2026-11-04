@@ -4,7 +4,10 @@ export type NotificationType =
   | 'order_placed'
   | 'order_status_changed'
   | 'order_ready'
-  | 'new_order';
+  | 'new_order'
+  | 'payment_uploaded'
+  | 'order_cancelled'
+  | 'new_enquiry';
 
 export interface INotification extends Document {
   user: Types.ObjectId;
@@ -27,7 +30,7 @@ const NotificationSchema = new Schema<INotification>(
     },
     type: {
       type: String,
-      enum: ['order_placed', 'order_status_changed', 'order_ready', 'new_order'],
+      enum: ['order_placed', 'order_status_changed', 'order_ready', 'new_order', 'payment_uploaded', 'order_cancelled', 'new_enquiry'],
       required: [true, 'Notification type is required'],
     },
     title: {

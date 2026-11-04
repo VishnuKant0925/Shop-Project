@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import { reconnectSocket } from '@/lib/socket';
 import { User } from '@/types';
 
 interface AuthContextType {
@@ -38,13 +39,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.clearTimeout(loadSession);
   }, [refreshUser]);
 
+  // Re-handshake the realtime socket only when the signed-in user actually changes
+  // (the first connection already reads the stored token).
+  const userId = user?.id ?? null;
+  const lastUserId = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (isLoading) return;
+    if (lastUserId.current !== undefined && lastUserId.current !== userId) reconnectSocket();
+    lastUserId.current = userId;
+  }, [userId, isLoading]);
+
   const logout = useCallback(async () => {
-    setUser(null);
     try {
       await api.logout();
     } catch {
       // The browser session is cleared by api.logout even when the server is unavailable.
     }
+    // Cleared after the stored token is gone so the socket re-handshakes anonymously.
+    setUser(null);
   }, []);
 
   return (

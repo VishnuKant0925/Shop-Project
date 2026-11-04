@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
 import { api } from '@/lib/api';
+import { getSocket } from '@/lib/socket';
+import { useAuth } from '@/context/AuthContext';
 import { Category, Product } from '@/types';
 
 interface ProductCatalogContextType {
@@ -15,21 +16,19 @@ interface ProductCatalogContextType {
 
 const ProductCatalogContext = createContext<ProductCatalogContextType | undefined>(undefined);
 
-const getRealtimeUrl = (): string => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-  return apiUrl.replace(/\/api\/?$/, '');
-};
-
 export function ProductCatalogProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Admins also load hidden products so the management screens can see and re-enable them.
+  const { user } = useAuth();
+  const includeHidden = user?.role === 'admin';
 
   const refreshCatalog = useCallback(async () => {
     try {
       const [nextProducts, nextCategories] = await Promise.all([
-        api.getProducts(),
+        api.getProducts({ all: includeHidden }),
         api.getCategories(),
       ]);
       setProducts(nextProducts);
@@ -40,16 +39,14 @@ export function ProductCatalogProvider({ children }: { children: React.ReactNode
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [includeHidden]);
 
   useEffect(() => {
     const initialFetch = window.setTimeout(() => {
       void refreshCatalog();
     }, 0);
 
-    const socket = io(getRealtimeUrl(), {
-      transports: ['polling', 'websocket'],
-    });
+    const socket = getSocket();
     const handleProductsChanged = () => {
       void refreshCatalog();
     };
@@ -64,7 +61,6 @@ export function ProductCatalogProvider({ children }: { children: React.ReactNode
       window.clearTimeout(initialFetch);
       window.clearInterval(resyncTimer);
       socket.off('products:changed', handleProductsChanged);
-      socket.disconnect();
     };
   }, [refreshCatalog]);
 

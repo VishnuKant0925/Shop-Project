@@ -125,10 +125,10 @@
   gap: var(--space-3);
   padding: var(--space-4);
   margin-bottom: var(--space-6);
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
   border-radius: var(--radius-md);
-  color: #b91c1c;
+  color: var(--color-danger-text);
   font-size: var(--font-size-sm);
   font-weight: 500;
   animation: fadeInDown 0.3s ease-out;
@@ -256,7 +256,7 @@
 }
 
 .qrCard {
-  background: white;
+  background: var(--color-surface-container-lowest);
   border: 2px solid var(--color-border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
@@ -288,7 +288,7 @@
 .qrImageWrap {
   display: inline-block;
   padding: var(--space-3);
-  background: white;
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-4);
@@ -358,7 +358,7 @@
   font-size: var(--font-size-xs);
   color: #16a34a;
   font-weight: 600;
-  background: #f0fdf4;
+  background: var(--color-success-bg);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
 }
@@ -515,7 +515,7 @@
   font-weight: 600;
   border-radius: var(--radius-full);
   background: rgba(245, 158, 11, 0.1);
-  color: #b45309;
+  color: var(--color-primary);
 }
 
 .nextSteps {
@@ -621,4 +621,109 @@
   .stepTitle {
     font-size: var(--font-size-xl);
   }
+}
+
+/* ── Coupon, notes, UPI app button ── */
+.extraField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.extraField label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.extraField input,
+.extraField textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-lowest);
+  resize: vertical;
+}
+
+.extraField input:focus,
+.extraField textarea:focus {
+  outline: none;
+  border-color: var(--color-primary-container);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.couponRow {
+  display: flex;
+  gap: 8px;
+}
+
+.couponRow input {
+  flex: 1;
+  min-width: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.couponBtn {
+  flex-shrink: 0;
+  padding: 0 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-container);
+  border-radius: var(--radius-md);
+}
+
+.couponBtn:disabled {
+  opacity: 0.5;
+}
+
+.couponOk {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-success-text);
+}
+
+.couponErr {
+  font-size: 0.8125rem;
+  color: var(--color-danger-text);
+}
+
+.discountRow {
+  color: var(--color-success-text);
+  font-weight: 600;
+}
+
+.upiAppBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
+  margin: 12px 0 4px;
+  padding: 0 16px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+}
+
+/* UPI deep links only work on phones */
+@media (hover: none) and (pointer: coarse) {
+  .upiAppBtn {
+    display: inline-flex;
+  }
+}
+
+.copyBtn {
+  margin-left: 8px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-full);
 }

@@ -74,9 +74,9 @@
   padding: var(--space-3) var(--space-4);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-4);
 }
@@ -89,7 +89,7 @@
   justify-content: center;
   text-align: center;
   padding: var(--space-16) var(--space-6);
-  background: white;
+  background: var(--color-surface-container-lowest);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-outline);
   box-shadow: var(--shadow-sm);
@@ -138,7 +138,7 @@
 }
 
 .orderCard {
-  background: white;
+  background: var(--color-surface-container-lowest);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline);
   box-shadow: var(--shadow-sm);
@@ -392,10 +392,16 @@
     padding: var(--space-3) var(--space-4);
   }
 
+  /* Order number gets its own line; total + status wrap beneath it */
+  .orderMain {
+    flex: 1 1 100%;
+  }
+
   .orderSummary {
     flex-direction: row;
     gap: var(--space-3);
     align-items: center;
+    margin-right: auto;
   }
 
   .timeline {
@@ -408,5 +414,55 @@
 
   .itemQty {
     display: none;
+  }
+}
+
+/* ── Order actions ── */
+.orderActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+
+.payNowBtn,
+.cancelOrderBtn,
+.buyAgainBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 20px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+}
+
+.payNowBtn {
+  color: #fff;
+  background: var(--gradient-primary);
+}
+
+.cancelOrderBtn {
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+}
+
+.cancelOrderBtn:disabled {
+  opacity: 0.6;
+}
+
+.buyAgainBtn {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-container);
+}
+
+@media (max-width: 640px) {
+  .payNowBtn,
+  .cancelOrderBtn,
+  .buyAgainBtn {
+    flex: 1;
   }
 }

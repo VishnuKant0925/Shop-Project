@@ -26,9 +26,9 @@ router.post(
         return;
       }
 
-      const folder = typeof req.body.folder === 'string' && req.body.folder.trim()
-        ? `pandit-mill/${req.body.folder.trim()}`
-        : 'pandit-mill/general';
+      // Only simple folder names: no path traversal into other Cloudinary folders
+      const requested = typeof req.body.folder === 'string' ? req.body.folder.trim().toLowerCase() : '';
+      const folder = /^[a-z0-9-]{1,30}$/.test(requested) ? `pandit-mill/${requested}` : 'pandit-mill/general';
 
       const url = await uploadImageFile(req.file.buffer, folder);
 

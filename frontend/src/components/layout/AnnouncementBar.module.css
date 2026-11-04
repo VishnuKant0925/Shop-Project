@@ -1,0 +1,19 @@
+.bar {
+  padding: 8px var(--container-padding);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  color: #fff;
+  background: var(--gradient-primary);
+}
+
+.closed {
+  background: #b91c1c;
+}
+
+@media (max-width: 768px) {
+  .bar {
+    font-size: var(--font-size-xs);
+  }
+}

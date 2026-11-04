@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
+import { useProductCatalog } from '@/context/ProductCatalogContext';
 import { api } from '@/lib/api';
 import { Order } from '@/types';
 import styles from './page.module.css';
@@ -51,28 +53,60 @@ export default function OrderHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState('');
+  const [notice, setNotice] = useState('');
+  const { addItem } = useCart();
+  const { products } = useProductCatalog();
 
-  const fetchOrders = useCallback(async () => {
+  const handleCancel = async (order: Order) => {
+    if (!window.confirm(`Cancel order ${order.orderNumber}?`)) return;
+    setBusyId(order.id);
     try {
-      const data = await api.getMyOrders();
-      setOrders(data);
-      setError('');
+      const updated = await api.cancelMyOrder(order.id);
+      setOrders((prev) => prev.map((o) => (o.id === order.id ? updated : o)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load orders');
+      setError(err instanceof Error ? err.message : 'Could not cancel the order');
     } finally {
-      setLoading(false);
+      setBusyId('');
     }
-  }, []);
+  };
+
+  // Put the items of a past order back in the cart (at today's price, only if still sold).
+  const handleBuyAgain = (order: Order) => {
+    let added = 0;
+    for (const item of order.items) {
+      const product = products.find((p) => p.id === item.productId && p.isActive);
+      if (product) {
+        addItem(product, item.quantity);
+        added += 1;
+      }
+    }
+    if (added > 0) {
+      router.push('/cart');
+    } else {
+      setNotice('These products are no longer available.');
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login');
       return;
     }
-    if (user) {
-      fetchOrders();
-    }
-  }, [user, authLoading, router, fetchOrders]);
+    if (!user) return;
+    let active = true;
+    api.getMyOrders()
+      .then((data) => {
+        if (!active) return;
+        setOrders(data);
+        setError('');
+      })
+      .catch((err) => active && setError(err instanceof Error ? err.message : 'Failed to load orders'))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [user, authLoading, router]);
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
@@ -104,6 +138,7 @@ export default function OrderHistoryPage() {
       </div>
 
       {error && <div className={styles.errorMsg}>{error}</div>}
+      {notice && <div className={styles.errorMsg}>{notice}</div>}
 
       {orders.length === 0 ? (
         <div className={styles.emptyState}>
@@ -192,11 +227,38 @@ export default function OrderHistoryPage() {
                       </div>
                       <div className={styles.totals}>
                         <div><span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span></div>
-                        <div><span>GST (5%)</span><span>{formatCurrency(order.tax)}</span></div>
+                        {!!order.discount && (
+                          <div><span>Coupon {order.couponCode}</span><span>−{formatCurrency(order.discount)}</span></div>
+                        )}
+                        <div><span>GST</span><span>{formatCurrency(order.tax)}</span></div>
                         <div className={styles.grandTotal}>
                           <span>Total</span><span>{formatCurrency(order.total)}</span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className={styles.orderActions}>
+                      {order.status === 'pending' && (
+                        <>
+                          <Link href={`/checkout?order=${order.id}`} className={styles.payNowBtn}>
+                            Pay now
+                          </Link>
+                          <button
+                            type="button"
+                            className={styles.cancelOrderBtn}
+                            onClick={() => handleCancel(order)}
+                            disabled={busyId === order.id}
+                          >
+                            {busyId === order.id ? 'Cancelling…' : 'Cancel order'}
+                          </button>
+                        </>
+                      )}
+                      {order.status !== 'pending' && (
+                        <button type="button" className={styles.buyAgainBtn} onClick={() => handleBuyAgain(order)}>
+                          Buy again
+                        </button>
+                      )}
                     </div>
 
                     {/* Payment Screenshot */}
@@ -204,6 +266,7 @@ export default function OrderHistoryPage() {
                       <div className={styles.detailSection}>
                         <h4>Payment Proof</h4>
                         <div className={styles.screenshotWrap}>
+                          {/* eslint-disable-next-line @next/next/no-img-element -- customer-uploaded screenshot (Cloudinary or API host) */}
                           <img src={order.paymentScreenshotUrl} alt="Payment proof" className={styles.screenshotImg} />
                         </div>
                       </div>

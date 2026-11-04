@@ -1,13 +1,22 @@
 import { Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import multer from 'multer';
-import { Order, IOrderItem } from '../models/Order';
+import { Order, IOrder, IOrderItem, OrderStatus } from '../models/Order';
 import { Product } from '../models/Product';
-import { User } from '../models/User';
-import { Notification } from '../models/Notification';
+import { Coupon, evaluateCoupon } from '../models/Coupon';
+import { getStoreSettings } from '../models/Settings';
 import { AuthRequest } from '../middleware/auth';
 import { uploadPaymentFile } from '../config/cloudinary';
 import { sendOrderReadyEmail } from '../services/emailService';
-import { emitOrderStatusChanged, emitNewNotification, emitAdminNotification } from '../realtime';
+import { notifyAdmins, notifyUser } from '../services/notify';
+import { emitOrderStatusChanged, emitProductsChanged } from '../realtime';
+import { parsePagination, searchRegex } from '../utils/helpers';
+
+const ORDER_STATUSES: OrderStatus[] = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled'];
+const MAX_LINE_ITEMS = 50;
+const MAX_QTY_PER_ITEM = 1000;
+
+const formatINR = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
 /* ── Multer (memory storage for Cloudinary) ── */
 export const screenshotUpload = multer({
@@ -19,101 +28,190 @@ export const screenshotUpload = multer({
   },
 }).single('screenshot');
 
+/** Return items of a cancelled order to stock exactly once. */
+const restoreStock = async (order: IOrder): Promise<void> => {
+  if (order.stockRestored) return;
+  const ops = order.items
+    .filter((item) => mongoose.Types.ObjectId.isValid(item.productId))
+    .map((item) => ({
+      updateOne: { filter: { _id: item.productId }, update: { $inc: { stockQuantity: item.quantity } } },
+    }));
+  if (ops.length > 0) await Product.bulkWrite(ops);
+  if (order.couponCode) {
+    await Coupon.updateOne({ code: order.couponCode, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+  }
+  order.stockRestored = true;
+  emitProductsChanged();
+};
+
+/** Customers never see the internal admin note. */
+const forCustomer = (order: IOrder) => {
+  const json = order.toJSON() as Record<string, unknown>;
+  delete json.adminNote;
+  delete json.stockRestored;
+  return json;
+};
+
 /* ── Create Order (authenticated) ── */
 export const createOrder = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  // Stock already taken for this request; given back if anything later fails.
+  const reserved: { productId: string; quantity: number }[] = [];
+  let couponConsumed: string | null = null;
+
+  const rollback = async () => {
+    if (reserved.length > 0) {
+      await Product.bulkWrite(reserved.map((r) => ({
+        updateOne: { filter: { _id: r.productId }, update: { $inc: { stockQuantity: r.quantity } } },
+      })));
+    }
+    if (couponConsumed) await Coupon.updateOne({ code: couponConsumed }, { $inc: { usedCount: -1 } });
+  };
+
   try {
     if (!req.user) {
       res.status(401).json({ success: false, message: 'Please login to place an order.' });
       return;
     }
 
-    const { items, notes } = req.body;
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      res.status(400).json({ success: false, message: 'Order must have at least one product item.' });
+    const settings = await getStoreSettings();
+    if (!settings.acceptingOrders) {
+      res.status(403).json({ success: false, message: settings.closedMessage });
       return;
     }
 
-    let subtotal = 0;
-    const validatedItems: IOrderItem[] = [];
+    const { items, notes, couponCode } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ success: false, message: 'Order must have at least one product item.' });
+      return;
+    }
+    if (items.length > MAX_LINE_ITEMS) {
+      res.status(400).json({ success: false, message: `An order can contain at most ${MAX_LINE_ITEMS} different products.` });
+      return;
+    }
 
+    // Validate and merge duplicate lines. Prices always come from the database, never the client.
+    const quantities = new Map<string, number>();
     for (const item of items) {
-      // Gracefully handle non-ObjectId product IDs (e.g. static catalogue data)
-      let product = null;
-      try {
-        product = await Product.findById(item.productId);
-      } catch {
-        // Invalid ObjectId format — skip DB lookup, use client-supplied values
+      const productId = String(item?.productId ?? '');
+      const quantity = Number(item?.quantity);
+      if (!mongoose.Types.ObjectId.isValid(productId)) {
+        res.status(400).json({ success: false, message: 'Your cart contains an item that is no longer sold. Please remove it and try again.' });
+        return;
       }
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QTY_PER_ITEM) {
+        res.status(400).json({ success: false, message: `Quantities must be whole numbers between 1 and ${MAX_QTY_PER_ITEM}.` });
+        return;
+      }
+      quantities.set(productId, (quantities.get(productId) || 0) + quantity);
+    }
 
-      const unitPrice = product ? product.price : Number(item.unitPrice);
-      const productName = product ? product.name : item.productName;
-      const quantity = Number(item.quantity);
-      const totalPrice = unitPrice * quantity;
+    const products = await Product.find({ _id: { $in: [...quantities.keys()] }, isActive: true });
+    const byId = new Map(products.map((p) => [p.id as string, p]));
+    const missing = [...quantities.keys()].filter((id) => !byId.has(id));
+    if (missing.length > 0) {
+      res.status(400).json({ success: false, message: 'Some items in your cart are no longer available. Please refresh your cart.' });
+      return;
+    }
 
+    // Atomically reserve stock for each line: the update only matches if enough stock remains.
+    const validatedItems: IOrderItem[] = [];
+    let subtotal = 0;
+    for (const [productId, quantity] of quantities) {
+      const product = byId.get(productId)!;
+      const result = await Product.updateOne(
+        { _id: productId, stockQuantity: { $gte: quantity } },
+        { $inc: { stockQuantity: -quantity } }
+      );
+      if (result.modifiedCount === 0) {
+        await rollback();
+        const fresh = await Product.findById(productId).select('stockQuantity unit').lean();
+        const left = fresh?.stockQuantity ?? 0;
+        res.status(409).json({
+          success: false,
+          message: left > 0
+            ? `Only ${left} ${product.unit} of ${product.name} left in stock. Please reduce the quantity.`
+            : `${product.name} just went out of stock. Please remove it from your cart.`,
+        });
+        return;
+      }
+      reserved.push({ productId, quantity });
+      const totalPrice = product.price * quantity;
       subtotal += totalPrice;
-      validatedItems.push({ productId: item.productId, productName, quantity, unitPrice, totalPrice });
-
-      // Decrement inventory
-      if (product) {
-        product.stockQuantity = Math.max(0, product.stockQuantity - quantity);
-        await product.save();
-      }
+      validatedItems.push({ productId, productName: product.name, quantity, unitPrice: product.price, totalPrice });
     }
 
-    const tax = Math.round(subtotal * 0.05); // 5 % GST
-    const total = subtotal + tax;
+    // Coupon: evaluate, then consume one use atomically so usage limits can't be overshot.
+    let discount = 0;
+    let appliedCode = '';
+    if (typeof couponCode === 'string' && couponCode.trim()) {
+      const code = couponCode.trim().toUpperCase();
+      const coupon = await Coupon.findOne({ code });
+      const evaluation = evaluateCoupon(coupon, subtotal);
+      if ('error' in evaluation) {
+        await rollback();
+        res.status(400).json({ success: false, message: evaluation.error });
+        return;
+      }
+      const consumed = await Coupon.updateOne(
+        {
+          _id: coupon!._id,
+          isActive: true,
+          $or: [{ usageLimit: 0 }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
+        },
+        { $inc: { usedCount: 1 } }
+      );
+      if (consumed.modifiedCount === 0) {
+        await rollback();
+        res.status(400).json({ success: false, message: 'This coupon has reached its usage limit.' });
+        return;
+      }
+      couponConsumed = code;
+      discount = evaluation.discount;
+      appliedCode = code;
+    }
 
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `ORD-${Date.now().toString().slice(-4)}${randomSuffix}`;
+    const taxable = subtotal - discount;
+    const tax = Math.round((taxable * settings.taxRate) / 100);
+    const total = taxable + tax;
 
-    const order = await Order.create({
-      orderNumber,
-      user: req.user._id,
-      customerName: req.user.name,
-      customerEmail: req.user.email,
-      customerPhone: req.user.phone || '',
-      shippingAddress: typeof notes === 'string' && notes.trim() ? notes.trim() : 'Pickup from shop',
-      items: validatedItems,
-      subtotal,
-      tax,
-      total,
-      status: 'pending',
-    });
+    const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}${Math.floor(100 + Math.random() * 900)}`;
+    const note = typeof notes === 'string' ? notes.trim().slice(0, 300) : '';
 
-    // Notify all admin users about the new order
+    let order: IOrder;
     try {
-      const admins = await User.find({ role: 'admin' }).select('_id');
-      const adminNotifications = admins.map((admin) => ({
-        user: admin._id,
-        type: 'new_order' as const,
-        title: 'New Order Received',
-        message: `New order ${order.orderNumber} from ${req.user!.name} — ₹${order.total}`,
-        data: { orderId: order.id, orderNumber: order.orderNumber },
-      }));
-      if (adminNotifications.length > 0) {
-        const created = await Notification.insertMany(adminNotifications);
-        // Emit to admin room
-        if (created.length > 0) {
-          const n = created[0];
-          emitAdminNotification({
-            id: n.id,
-            type: n.type,
-            title: n.title,
-            message: n.message,
-            createdAt: n.createdAt,
-          });
-        }
-      }
-    } catch (notifErr) {
-      console.error('[Notification] Failed to notify admins about new order:', notifErr);
+      order = await Order.create({
+        orderNumber,
+        user: req.user._id,
+        customerName: req.user.name,
+        customerEmail: req.user.email,
+        customerPhone: req.user.phone || '',
+        shippingAddress: note || 'Pickup from shop',
+        items: validatedItems,
+        subtotal,
+        discount,
+        couponCode: appliedCode,
+        tax,
+        total,
+        status: 'pending',
+      });
+    } catch (createErr) {
+      await rollback();
+      throw createErr;
     }
 
-    res.status(201).json({ success: true, message: 'Order placed successfully', data: order });
+    emitProductsChanged();
+    void notifyAdmins(
+      'new_order',
+      'New Order Received',
+      `New order ${order.orderNumber} from ${req.user.name} — ${formatINR(order.total)}`,
+      { orderId: order.id, orderNumber: order.orderNumber }
+    );
+
+    res.status(201).json({ success: true, message: 'Order placed successfully', data: forCustomer(order) });
   } catch (error) {
     next(error);
   }
@@ -131,44 +229,76 @@ export const uploadPaymentScreenshot = async (
       return;
     }
 
-    const { id } = req.params;
-    const order = await Order.findById(id);
-
+    const order = await Order.findById(req.params.id);
     if (!order) {
       res.status(404).json({ success: false, message: 'Order not found.' });
       return;
     }
-
     if (String(order.user) !== String(req.user._id)) {
       res.status(403).json({ success: false, message: 'You can only upload payment proof for your own orders.' });
       return;
     }
-
     if (order.status !== 'pending') {
       res.status(400).json({ success: false, message: 'Payment screenshot can only be uploaded for pending orders.' });
       return;
     }
-
     if (!req.file) {
       res.status(400).json({ success: false, message: 'Please attach a payment screenshot image.' });
       return;
     }
 
-    // Upload to Cloudinary with local storage fallback
-    const host = req.get('host') || 'localhost:5000';
-    const protocol = req.protocol || 'http';
-    const screenshotUrl = await uploadPaymentFile(
-      req.file.buffer,
-      req.file.originalname,
-      host,
-      protocol
-    );
+    // Permanent Cloudinary storage; on failure the order stays "pending" so the customer can retry.
+    const screenshotUrl = await uploadPaymentFile(req.file.buffer);
 
     order.paymentScreenshotUrl = screenshotUrl;
     order.status = 'paid';
     await order.save();
 
-    res.status(200).json({ success: true, message: 'Payment proof uploaded successfully.', data: order });
+    void notifyAdmins(
+      'payment_uploaded',
+      'Payment Proof Uploaded',
+      `${order.customerName} uploaded payment for ${order.orderNumber} (${formatINR(order.total)}). Please verify.`,
+      { orderId: order.id, orderNumber: order.orderNumber }
+    );
+
+    res.status(200).json({ success: true, message: 'Payment proof uploaded successfully.', data: forCustomer(order) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ── Customer cancels their own unpaid order ── */
+export const cancelMyOrder = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order || String(order.user) !== String(req.user!._id)) {
+      res.status(404).json({ success: false, message: 'Order not found.' });
+      return;
+    }
+    if (order.status !== 'pending') {
+      res.status(400).json({
+        success: false,
+        message: 'Only unpaid orders can be cancelled online. Please call the mill to cancel a paid order.',
+      });
+      return;
+    }
+
+    order.status = 'cancelled';
+    await restoreStock(order);
+    await order.save();
+
+    void notifyAdmins(
+      'order_cancelled',
+      'Order Cancelled by Customer',
+      `${order.customerName} cancelled order ${order.orderNumber}.`,
+      { orderId: order.id, orderNumber: order.orderNumber }
+    );
+
+    res.status(200).json({ success: true, message: 'Order cancelled.', data: forCustomer(order) });
   } catch (error) {
     next(error);
   }
@@ -181,37 +311,60 @@ export const getMyOrders = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ success: false, message: 'Not authorized' });
-      return;
-    }
-
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.user!._id })
+      .select('-adminNote -stockRestored')
+      .sort({ createdAt: -1 })
+      .limit(200);
     res.status(200).json({ success: true, count: orders.length, data: orders });
   } catch (error) {
     next(error);
   }
 };
 
-/* ── Get All Orders (admin) ── */
+/* ── Get All Orders (admin): filter, search and paginate ── */
 export const getAllOrders = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { status } = req.query;
-    const query: Record<string, unknown> = {};
+    const { status, q } = req.query;
+    const { page, limit, skip } = parsePagination(req.query, 25);
 
-    if (status && status !== 'all') {
+    const baseQuery: Record<string, unknown> = {};
+    const rx = searchRegex(q);
+    if (rx) {
+      baseQuery.$or = [{ orderNumber: rx }, { customerName: rx }, { customerEmail: rx }, { customerPhone: rx }];
+    }
+
+    const query = { ...baseQuery };
+    if (typeof status === 'string' && status !== 'all' && ORDER_STATUSES.includes(status as OrderStatus)) {
       query.status = status;
     }
 
-    const orders = await Order.find(query)
-      .populate('user', 'name email phone')
-      .sort({ createdAt: -1 });
+    const [orders, total, counts] = await Promise.all([
+      Order.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Order.countDocuments(query),
+      Order.aggregate<{ _id: string; count: number }>([
+        { $match: baseQuery },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+    ]);
 
-    res.status(200).json({ success: true, count: orders.length, data: orders });
+    const statusCounts: Record<string, number> = { all: 0 };
+    for (const s of ORDER_STATUSES) statusCounts[s] = 0;
+    for (const c of counts) {
+      statusCounts[c._id] = c.count;
+      statusCounts.all += c.count;
+    }
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+      statusCounts,
+      pagination: { page, limit, total, pages: Math.max(1, Math.ceil(total / limit)) },
+    });
   } catch (error) {
     next(error);
   }
@@ -224,93 +377,82 @@ export const getOrderById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
-    const order = await Order.findById(id).populate('user', 'name email phone');
+    const order = await Order.findById(req.params.id);
+    const isAdmin = req.user?.role === 'admin';
 
-    if (!order) {
+    if (!order || (!isAdmin && String(order.user) !== String(req.user!._id))) {
       res.status(404).json({ success: false, message: 'Order not found' });
       return;
     }
 
-    // Customers can only view their own orders
-    if (req.user && req.user.role !== 'admin' && String(order.user) !== String(req.user._id)) {
-      res.status(403).json({ success: false, message: 'Access denied to this order' });
-      return;
-    }
-
-    res.status(200).json({ success: true, data: order });
+    res.status(200).json({ success: true, data: isAdmin ? order : forCustomer(order) });
   } catch (error) {
     next(error);
   }
 };
 
-/* ── Update Order Status (admin) ── */
+const statusLabels: Record<string, string> = {
+  pending: 'Awaiting Payment',
+  paid: 'Payment Confirmed',
+  preparing: 'Order Being Prepared',
+  ready: 'Order Ready for Pickup',
+  completed: 'Order Completed',
+  cancelled: 'Order Cancelled',
+};
+
+/* ── Update Order status and/or admin note (admin) ── */
 export const updateOrderStatus = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const { status, adminNote } = req.body;
 
-    const validStatuses = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled'];
-    if (!validStatuses.includes(status)) {
-      res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    if (status === undefined && adminNote === undefined) {
+      res.status(400).json({ success: false, message: 'Nothing to update.' });
+      return;
+    }
+    if (status !== undefined && !ORDER_STATUSES.includes(status)) {
+      res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${ORDER_STATUSES.join(', ')}` });
       return;
     }
 
-    const order = await Order.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true, runValidators: true }
-    );
-
+    const order = await Order.findById(req.params.id);
     if (!order) {
       res.status(404).json({ success: false, message: 'Order not found' });
       return;
     }
 
-    // Notify the customer about every status change via socket + persistent notification
-    if (order.user) {
-      const userId = String(order.user);
-      emitOrderStatusChanged(userId, {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        status,
-      });
+    if (typeof adminNote === 'string') order.adminNote = adminNote.trim().slice(0, 500);
 
-      // Create persistent notification for the customer
-      const statusLabels: Record<string, string> = {
-        paid: 'Payment Confirmed',
-        preparing: 'Order Being Prepared',
-        ready: 'Order Ready for Pickup',
-        completed: 'Order Completed',
-        cancelled: 'Order Cancelled',
-      };
-      const statusLabel = statusLabels[status] || `Status: ${status}`;
-
-      try {
-        const notif = await Notification.create({
-          user: order.user,
-          type: status === 'ready' ? 'order_ready' : 'order_status_changed',
-          title: statusLabel,
-          message: `Your order #${order.orderNumber} has been updated to: ${statusLabel}`,
-          data: { orderId: order.id, orderNumber: order.orderNumber, status },
+    const statusChanged = status !== undefined && status !== order.status;
+    if (statusChanged) {
+      if (order.status === 'cancelled') {
+        res.status(400).json({
+          success: false,
+          message: 'A cancelled order cannot be reopened because its stock was already released. Ask the customer to order again.',
         });
-
-        emitNewNotification(userId, {
-          id: notif.id,
-          type: notif.type,
-          title: notif.title,
-          message: notif.message,
-          createdAt: notif.createdAt,
-        });
-      } catch (notifErr) {
-        console.error('[Notification] Failed to create status notification:', notifErr);
+        return;
       }
+      order.status = status;
+      if (status === 'cancelled') await restoreStock(order);
+    }
 
-      // When admin marks as "ready", also send email
+    await order.save();
+
+    if (statusChanged && order.user) {
+      const userId = String(order.user);
+      emitOrderStatusChanged(userId, { orderId: order.id, orderNumber: order.orderNumber, status });
+      const label = statusLabels[status] || `Status: ${status}`;
+      void notifyUser(
+        userId,
+        status === 'ready' ? 'order_ready' : 'order_status_changed',
+        label,
+        `Your order #${order.orderNumber} has been updated to: ${label}`,
+        { orderId: order.id, orderNumber: order.orderNumber, status }
+      );
+
       if (status === 'ready') {
         sendOrderReadyEmail(order.customerEmail, order.orderNumber, order.total).catch((err) =>
           console.error('[Email] Failed to send order-ready notification:', err.message)

@@ -1,18 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { Service } from '../models/Service';
+import { AuthRequest } from '../middleware/auth';
+import { pick, slugify } from '../utils/helpers';
+
+const EDITABLE = ['name', 'slug', 'description', 'rate', 'rateUnit', 'imageUrl', 'icon', 'features', 'isActive'] as const;
 
 export const getServices = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { isActive } = req.query;
-    const query: Record<string, any> = {};
-
-    if (isActive !== undefined) {
-      query.isActive = isActive === 'true';
+    // Public visitors only see active services; admins can request everything with ?all=true.
+    const query: Record<string, unknown> = {};
+    if (!(req.query.all === 'true' && req.user?.role === 'admin')) {
+      query.isActive = true;
     }
 
     const services = await Service.find(query).sort({ createdAt: -1 });
@@ -57,7 +60,11 @@ export const createService = async (
 ): Promise<void> => {
   try {
     const { name, slug, description, rate, rateUnit, imageUrl, icon, features, isActive } = req.body;
-    const computedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (typeof name !== 'string' || !name.trim()) {
+      res.status(400).json({ success: false, message: 'Service name is required' });
+      return;
+    }
+    const computedSlug = slugify(slug || name);
 
     const service = await Service.create({
       name,
@@ -84,7 +91,10 @@ export const updateService = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const service = await Service.findByIdAndUpdate(id, req.body, {
+    const update = pick(req.body, EDITABLE) as Record<string, unknown>;
+    if (typeof update.slug === 'string') update.slug = slugify(update.slug);
+    if (update.rate !== undefined) update.rate = Number(update.rate);
+    const service = await Service.findByIdAndUpdate(id, update, {
       new: true,
       runValidators: true,
     });

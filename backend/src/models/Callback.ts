@@ -46,6 +46,8 @@ const CallbackSchema = new Schema<ICallback>(
   }
 );
 
+CallbackSchema.index({ status: 1, createdAt: -1 });
+
 CallbackSchema.virtual('id').get(function () {
   return this._id.toHexString();
 });

@@ -1,25 +1,33 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import React, { Suspense, useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 import { api } from '@/lib/api';
 import { Order } from '@/types';
 import { formatCurrency } from '@/data';
 import styles from './page.module.css';
 
-const UPI_ID = '6205372825@axl';
-const UPI_NAME = 'New Pandit Masala Tel Mill';
-
 type Step = 'review' | 'payment' | 'upload' | 'confirmed';
 
+// useSearchParams needs a Suspense boundary so the rest of the page can still be prerendered.
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutContent />
+    </Suspense>
+  );
+}
+
+function CheckoutContent() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const { items, totalPrice, clearCart, isLoaded } = useCart();
+  const { settings } = useSettings();
 
   const [step, setStep] = useState<Step>('review');
   const [order, setOrder] = useState<Order | null>(null);
@@ -27,8 +35,18 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // QR code image source with auto-fallback
-  const [qrSrc, setQrSrc] = useState('/images/payment-qr.png');
+  // "Pay now" from My Orders opens /checkout?order=<id> to finish paying an unpaid order.
+  const resumeId = useSearchParams().get('order');
+
+  // Coupon + pickup note
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; subtotal: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [notes, setNotes] = useState('');
+
+  // UPI QR generated for the exact order amount
+  const [qrDataUrl, setQrDataUrl] = useState('');
 
   // Upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -45,13 +63,65 @@ export default function CheckoutPage() {
 
   // Redirect if cart empty and no order placed yet (only after cart is loaded)
   useEffect(() => {
-    if (!authLoading && isLoaded && items.length === 0 && !order) {
+    if (!authLoading && isLoaded && items.length === 0 && !order && !resumeId) {
       router.replace('/cart');
     }
-  }, [authLoading, isLoaded, items.length, order, router]);
+  }, [authLoading, isLoaded, items.length, order, router, resumeId]);
 
-  const tax = totalPrice * 0.05;
-  const grandTotal = totalPrice + tax;
+  // Resume payment for an existing unpaid order
+  useEffect(() => {
+    if (!resumeId || !user) return;
+    api.getOrder(resumeId)
+      .then((existing) => {
+        if (existing.status === 'pending') {
+          setOrder(existing);
+          setStep('payment');
+        } else {
+          router.replace('/orders');
+        }
+      })
+      .catch(() => router.replace('/orders'));
+  }, [resumeId, user, router]);
+
+  const upiLink = order
+    ? `upi://pay?${new URLSearchParams({
+        pa: settings.upiId,
+        pn: settings.upiName,
+        am: order.total.toFixed(2),
+        cu: 'INR',
+        tn: `Order ${order.orderNumber}`,
+      }).toString()}`
+    : '';
+
+  useEffect(() => {
+    if (!upiLink) return;
+    QRCode.toDataURL(upiLink, { width: 440, margin: 1, errorCorrectionLevel: 'M' })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(''));
+  }, [upiLink]);
+
+  // A coupon checked against a different cart total no longer applies.
+  const activeCoupon = appliedCoupon && appliedCoupon.subtotal === totalPrice ? appliedCoupon : null;
+  const discount = activeCoupon?.discount ?? 0;
+  const tax = Math.round(((totalPrice - discount) * settings.taxRate) / 100);
+  const grandTotal = totalPrice - discount + tax;
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+    setCouponLoading(true);
+    setCouponMsg('');
+    try {
+      const res = await api.validateCoupon(code, totalPrice);
+      setAppliedCoupon({ code: res.code, discount: res.discount, subtotal: totalPrice });
+      setCouponMsg(res.message);
+    } catch (err: unknown) {
+      setAppliedCoupon(null);
+      setCouponMsg(err instanceof Error ? err.message : 'Invalid coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   /* ── Step 1: Place Order ── */
   const handlePlaceOrder = async () => {
@@ -60,12 +130,14 @@ export default function CheckoutPage() {
     try {
       const orderItems = items.map((item) => ({
         productId: item.product.id,
-        productName: item.product.name,
         quantity: item.quantity,
-        unitPrice: item.product.price,
       }));
 
-      const created = await api.createOrder({ items: orderItems });
+      const created = await api.createOrder({
+        items: orderItems,
+        notes: notes.trim() || undefined,
+        couponCode: activeCoupon?.code,
+      });
       setOrder(created);
       clearCart();
       setStep('payment');
@@ -195,8 +267,14 @@ export default function CheckoutPage() {
                 <span>Subtotal</span>
                 <span>{formatCurrency(totalPrice)}</span>
               </div>
+              {discount > 0 && (
+                <div className={`${styles.totalRow} ${styles.discountRow}`}>
+                  <span>Coupon {activeCoupon?.code}</span>
+                  <span>−{formatCurrency(discount)}</span>
+                </div>
+              )}
               <div className={styles.totalRow}>
-                <span>GST (5%)</span>
+                <span>GST ({settings.taxRate}%)</span>
                 <span>{formatCurrency(tax)}</span>
               </div>
               <div className={styles.totalDivider} />
@@ -206,7 +284,52 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <button className={styles.primaryBtn} onClick={handlePlaceOrder} disabled={loading}>
+            {/* Coupon */}
+            <div className={styles.extraField}>
+              <label htmlFor="coupon-code">Have a coupon code?</label>
+              <div className={styles.couponRow}>
+                <input
+                  id="coupon-code"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  placeholder="e.g. PANDIT15"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  maxLength={20}
+                />
+                {activeCoupon ? (
+                  <button type="button" className={styles.couponBtn} onClick={() => { setAppliedCoupon(null); setCouponMsg(''); setCouponInput(''); }}>
+                    Remove
+                  </button>
+                ) : (
+                  <button type="button" className={styles.couponBtn} onClick={handleApplyCoupon} disabled={couponLoading || !couponInput.trim()}>
+                    {couponLoading ? '...' : 'Apply'}
+                  </button>
+                )}
+              </div>
+              {couponMsg && (
+                <p className={activeCoupon ? styles.couponOk : styles.couponErr} role="status">{couponMsg}</p>
+              )}
+            </div>
+
+            {/* Pickup note */}
+            <div className={styles.extraField}>
+              <label htmlFor="order-notes">Note for the mill (optional)</label>
+              <textarea
+                id="order-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Pickup time, packing preference…"
+                rows={2}
+                maxLength={300}
+              />
+            </div>
+
+            {!settings.acceptingOrders && (
+              <div className={styles.errorBanner} role="alert">{settings.closedMessage}</div>
+            )}
+
+            <button className={styles.primaryBtn} onClick={handlePlaceOrder} disabled={loading || !settings.acceptingOrders}>
               {loading ? <span className={styles.spinner} /> : <>Place Order &amp; Pay via UPI</>}
             </button>
 
@@ -232,33 +355,34 @@ export default function CheckoutPage() {
                   <span className={styles.qrAmountValue}>{formatCurrency(order.total)}</span>
                 </div>
                 <div className={styles.qrImageWrap}>
-                  <Image
-                    src={qrSrc}
-                    alt="UPI Payment QR Code"
-                    width={220}
-                    height={220}
-                    className={styles.qrImage}
-                    priority
-                    onError={() => {
-                      if (qrSrc.endsWith('.png')) {
-                        setQrSrc('/images/payment-qr.jpeg');
-                      } else if (qrSrc.endsWith('.jpeg')) {
-                        setQrSrc('/images/payment-qr.png');
-                      }
-                    }}
-                  />
+                  {qrDataUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- generated data URL
+                    <img src={qrDataUrl} alt={`UPI QR code to pay ${formatCurrency(order.total)}`} width={220} height={220} className={styles.qrImage} />
+                  ) : (
+                    <span className={styles.spinner} />
+                  )}
                 </div>
+                <a href={upiLink} className={styles.upiAppBtn}>
+                  Pay {formatCurrency(order.total)} with UPI app
+                </a>
                 <div className={styles.upiInfo}>
                   <span className={styles.upiLabel}>UPI ID</span>
-                  <code className={styles.upiId}>{UPI_ID}</code>
+                  <code className={styles.upiId}>{settings.upiId}</code>
+                  <button
+                    type="button"
+                    className={styles.copyBtn}
+                    onClick={() => navigator.clipboard?.writeText(settings.upiId)}
+                  >
+                    Copy
+                  </button>
                 </div>
               </div>
 
               <div className={styles.paymentInstructions}>
                 <h3>How to Pay</h3>
                 <ol>
-                  <li>Open any UPI app (GPay, PhonePe, Paytm, etc.)</li>
-                  <li>Scan the QR code or enter the UPI ID manually</li>
+                  <li>On this phone, tap <strong>Pay with UPI app</strong>, or scan the QR from another phone</li>
+                  <li>The amount and order number are filled in automatically</li>
                   <li>Pay the exact amount: <strong>{formatCurrency(order.total)}</strong></li>
                   <li>Take a screenshot of the payment confirmation</li>
                   <li>Click the button below and upload the screenshot</li>
@@ -307,6 +431,7 @@ export default function CheckoutPage() {
 
               {previewUrl ? (
                 <div className={styles.previewWrap}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local blob: preview of the selected screenshot */}
                   <img src={previewUrl} alt="Payment screenshot preview" className={styles.previewImg} />
                   <div className={styles.previewOverlay}>
                     <span>Click to change</span>
@@ -397,7 +522,10 @@ export default function CheckoutPage() {
             </div>
 
             <div className={styles.confirmActions}>
-              <Link href="/products" className={styles.primaryBtn}>
+              <Link href="/orders" className={styles.primaryBtn}>
+                Track My Order
+              </Link>
+              <Link href="/products" className={styles.backLink}>
                 Continue Shopping
               </Link>
             </div>

@@ -1,151 +1,91 @@
-'use client';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getProductBySlug } from '@/lib/serverApi';
+import { absoluteUrl, siteConfig } from '@/lib/site';
+import ProductDetail from './ProductDetail';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { formatCurrency } from '@/data';
-import { useCart } from '@/context/CartContext';
-import { useProductCatalog } from '@/context/ProductCatalogContext';
-import ProductCard from '@/components/products/ProductCard';
-import styles from './page.module.css';
+type Props = { params: Promise<{ slug: string }> };
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const slug = params.slug as string;
-  const { products, isLoading, error } = useProductCatalog();
-  const product = products.find((p) => p.slug === slug);
-  const { addItem, getItemQuantity, updateQuantity } = useCart();
-  const [quantity, setQuantity] = useState(1);
+const toAbsolute = (url: string) => (url.startsWith('http') ? url : absoluteUrl(url));
 
-  if (isLoading) {
-    return (
-      <div className={styles.notFound}>
-        <h2>Loading product...</h2>
-      </div>
-    );
-  }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+  const path = `/products/${slug}`;
 
   if (!product) {
-    return (
-      <div className={styles.notFound}>
-        <h2>{error ? 'Could not load this product' : 'Product not found'}</h2>
-        {error && <p>{error}</p>}
-        <Link href="/products">← Back to Products</Link>
-      </div>
-    );
+    return { title: { absolute: `Product | ${siteConfig.name}` }, alternates: { canonical: path } };
   }
 
-  const cartQty = getItemQuantity(product.id);
-  const relatedProducts = products.filter((p) => p.id !== product.id).slice(0, 3);
+  const description = product.description.length > 160
+    ? `${product.description.slice(0, 157).trimEnd()}…`
+    : product.description;
+
+  return {
+    // Absolute: the /products layout's string title stops the root template from applying here.
+    title: { absolute: `${product.name} — Buy Online | ${siteConfig.name}` },
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      type: 'website',
+      url: path,
+      title: `${product.name} | ${siteConfig.shortName}`,
+      description,
+      images: [{ url: toAbsolute(product.imageUrl), alt: product.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description,
+      images: [toAbsolute(product.imageUrl)],
+    },
+  };
+}
+
+export default async function ProductPage({ params }: Props) {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+  if (product === null) notFound();
+
+  const jsonLd = product && [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description: product.description,
+      image: [toAbsolute(product.imageUrl)],
+      sku: product.id,
+      brand: { '@type': 'Brand', name: siteConfig.shortName },
+      offers: {
+        '@type': 'Offer',
+        url: absoluteUrl(`/products/${product.slug}`),
+        priceCurrency: 'INR',
+        price: product.price,
+        availability: product.stockQuantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: { '@id': absoluteUrl('/#store') },
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: absoluteUrl('/') },
+        { '@type': 'ListItem', position: 2, name: 'Store', item: absoluteUrl('/products') },
+        { '@type': 'ListItem', position: 3, name: product.name, item: absoluteUrl(`/products/${product.slug}`) },
+      ],
+    },
+  ];
 
   return (
-    <div className={styles.page}>
-      <div className="container">
-        {/* Breadcrumb */}
-        <nav className={styles.breadcrumb}>
-          <Link href="/">Home</Link>
-          <span>/</span>
-          <Link href="/products">Products</Link>
-          <span>/</span>
-          <span className={styles.breadcrumbCurrent}>{product.name}</span>
-        </nav>
-
-        {/* Product Detail */}
-        <div className={styles.detail}>
-          <div className={styles.imageSection}>
-            <div className={styles.imageWrapper}>
-              {product.badge && (
-                <span className={styles.badge}>{product.badge}</span>
-              )}
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                width={600}
-                height={600}
-                className={styles.image}
-                priority
-              />
-            </div>
-          </div>
-
-          <div className={styles.infoSection}>
-            <h1 className={styles.productName}>{product.name}</h1>
-
-            <div className={styles.priceRow}>
-              <span className={styles.price}>{formatCurrency(product.price)}</span>
-              <span className={styles.unit}>per {product.unit}</span>
-            </div>
-
-            <div className={styles.stockBadge}>
-              <span className={styles.stockDot} />
-              In Stock ({product.stockQuantity} {product.unit} available)
-            </div>
-
-            <p className={styles.description}>{product.description}</p>
-
-            {/* Quantity & Add to Cart */}
-            <div className={styles.addSection}>
-              <div className={styles.quantityControl}>
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className={styles.qtyBtn}
-                >
-                  −
-                </button>
-                <span className={styles.qtyValue}>{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className={styles.qtyBtn}
-                >
-                  +
-                </button>
-              </div>
-
-              <button
-                className={styles.addToCartBtn}
-                onClick={() => addItem(product, quantity)}
-              >
-                {cartQty > 0 ? `Add More (${cartQty} in cart)` : 'Add to Cart'}
-              </button>
-            </div>
-
-            {cartQty > 0 && (
-              <Link href="/cart" className={styles.goToCart}>
-                Go to Cart →
-              </Link>
-            )}
-
-            {/* Features */}
-            <div className={styles.features}>
-              <div className={styles.featureItem}>
-                <span>🌿</span> 100% Natural & Pure
-              </div>
-              <div className={styles.featureItem}>
-                <span>🧪</span> Lab Tested Quality
-              </div>
-              <div className={styles.featureItem}>
-                <span>📦</span> Secure Packaging
-              </div>
-              <div className={styles.featureItem}>
-                <span>🚚</span> Fast Delivery
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <section className={styles.relatedSection}>
-            <h2 className={styles.relatedTitle}>You May Also Like</h2>
-            <div className={styles.relatedGrid}>
-              {relatedProducts.map((p, idx) => (
-                <ProductCard key={p.id} product={p} index={idx} />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-    </div>
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <ProductDetail slug={slug} initialProduct={product ?? null} />
+    </>
   );
 }

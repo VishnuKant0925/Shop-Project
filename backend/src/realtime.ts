@@ -1,8 +1,30 @@
 import { Server as HttpServer } from 'http';
+import jwt from 'jsonwebtoken';
 import { Server as SocketServer } from 'socket.io';
 import { corsOriginDelegate } from './config/cors';
+import { JwtPayload } from './middleware/auth';
+import { RevokedToken } from './models/RevokedToken';
+import { User } from './models/User';
 
 let io: SocketServer | undefined;
+
+/**
+ * Resolve the socket's user from the JWT sent in the handshake (`auth: { token }`).
+ * Rooms are assigned server-side, so clients can no longer subscribe to the admin room
+ * or to another user's notifications by emitting a "join" event.
+ */
+const identify = async (token: unknown): Promise<{ id: string; role: string } | null> => {
+  if (typeof token !== 'string' || !token) return null;
+  try {
+    const secret = process.env.JWT_SECRET || 'pandit_mill_secret_key';
+    const decoded = jwt.verify(token, secret) as JwtPayload;
+    if (decoded.jti && await RevokedToken.exists({ tokenId: decoded.jti })) return null;
+    const user = await User.findById(decoded.id).select('role').lean();
+    return user ? { id: String(user._id), role: user.role } : null;
+  } catch {
+    return null;
+  }
+};
 
 export const initialiseRealtime = (server: HttpServer): SocketServer => {
   io = new SocketServer(server, {
@@ -14,18 +36,12 @@ export const initialiseRealtime = (server: HttpServer): SocketServer => {
     transports: ['polling', 'websocket'],
   });
 
-  io.on('connection', (socket) => {
-    // Authenticated clients join their personal room to receive order updates.
-    socket.on('join', (userId: string) => {
-      if (typeof userId === 'string' && userId.length > 0) {
-        socket.join(`user:${userId}`);
-      }
-    });
-
-    // Admin clients join the admin room to receive new order notifications.
-    socket.on('join-admin', () => {
-      socket.join('admin');
-    });
+  io.on('connection', async (socket) => {
+    // Anonymous sockets are allowed: they only receive public catalogue/settings broadcasts.
+    const user = await identify(socket.handshake.auth?.token);
+    if (!user) return;
+    socket.join(`user:${user.id}`);
+    if (user.role === 'admin') socket.join('admin');
   });
 
   return io;
@@ -33,6 +49,10 @@ export const initialiseRealtime = (server: HttpServer): SocketServer => {
 
 export const emitProductsChanged = (): void => {
   io?.emit('products:changed');
+};
+
+export const emitSettingsChanged = (): void => {
+  io?.emit('settings:changed');
 };
 
 /** Notify a specific user that one of their orders changed status. */
