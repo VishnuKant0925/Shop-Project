@@ -4,6 +4,7 @@ import { Product } from '../models/Product';
 import { AuthRequest } from '../middleware/auth';
 import { emitProductsChanged } from '../realtime';
 import { pick, searchRegex, slugify } from '../utils/helpers';
+import { logStockMovements, roundQty } from '../services/stock';
 
 const EDITABLE = ['name', 'slug', 'description', 'price', 'unit', 'stockQuantity', 'imageUrl', 'badge', 'isActive'] as const;
 
@@ -11,7 +12,7 @@ const toUpdate = (body: Record<string, unknown>) => {
   const data = pick(body, EDITABLE) as Record<string, unknown>;
   if (body.categoryId !== undefined) data.category = body.categoryId;
   if (data.price !== undefined) data.price = Number(data.price);
-  if (data.stockQuantity !== undefined) data.stockQuantity = Math.max(0, Math.floor(Number(data.stockQuantity) || 0));
+  if (data.stockQuantity !== undefined) data.stockQuantity = Math.max(0, roundQty(Number(data.stockQuantity) || 0));
   if (typeof data.slug === 'string') data.slug = slugify(data.slug);
   return data;
 };
@@ -103,6 +104,15 @@ export const createProduct = async (
     });
 
     const populated = await product.populate('category', 'name slug');
+    if (product.stockQuantity > 0) {
+      void logStockMovements([{
+        productId: product.id,
+        change: product.stockQuantity,
+        reason: 'restock',
+        note: 'Opening stock',
+        userId: req.user?._id,
+      }]);
+    }
     emitProductsChanged();
     res.status(201).json({ success: true, data: populated });
   } catch (error) {
@@ -116,7 +126,12 @@ export const updateProduct = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, toUpdate(req.body), {
+    const update = toUpdate(req.body);
+    const before = update.stockQuantity !== undefined
+      ? await Product.findById(req.params.id).select('stockQuantity').lean()
+      : null;
+
+    const product = await Product.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
     }).populate('category', 'name slug');
@@ -124,6 +139,16 @@ export const updateProduct = async (
     if (!product) {
       res.status(404).json({ success: false, message: 'Product not found' });
       return;
+    }
+
+    if (before && before.stockQuantity !== product.stockQuantity) {
+      void logStockMovements([{
+        productId: product.id,
+        change: product.stockQuantity - before.stockQuantity,
+        reason: 'correction',
+        note: 'Edited on product form',
+        userId: req.user?._id,
+      }]);
     }
 
     emitProductsChanged();

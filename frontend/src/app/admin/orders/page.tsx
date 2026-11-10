@@ -7,6 +7,8 @@ import { Order, OrderStatus } from '@/types';
 import { formatCurrency } from '@/data';
 import styles from './page.module.css';
 import ui from '../admin.module.css';
+import { downloadBillPdf, orderToDocument } from '@/lib/billPdf';
+import { useSettings } from '@/context/SettingsContext';
 
 const statusOptions: OrderStatus[] = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled'];
 const statusColors: Record<string, string> = {
@@ -45,6 +47,7 @@ export default function AdminOrdersPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [listError, setListError] = useState('');
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const { settings } = useSettings();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState('');
   const [actionLoading, setActionLoading] = useState('');
@@ -275,6 +278,11 @@ export default function AdminOrdersPage() {
 
                     {/* Actions */}
                     <div className={styles.orderActions}>
+                      {order.status !== 'pending' && order.status !== 'cancelled' && (
+                        <button type="button" className={ui.btn} onClick={() => void downloadBillPdf(orderToDocument(order), settings)}>
+                          Download invoice
+                        </button>
+                      )}
                       {action && (
                         <button
                           className={styles.actionBtn}

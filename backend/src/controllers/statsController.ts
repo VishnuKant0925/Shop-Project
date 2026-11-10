@@ -5,9 +5,9 @@ import { Product } from '../models/Product';
 import { Service } from '../models/Service';
 import { User } from '../models/User';
 import { Callback } from '../models/Callback';
+import { Bill } from '../models/Bill';
+import { getStoreSettings } from '../models/Settings';
 import { PAID_STATUSES } from '../utils/helpers';
-
-const LOW_STOCK_THRESHOLD = 40;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const percentChange = (current: number, previous: number): string => {
@@ -33,6 +33,7 @@ export const getDashboardStats = async (
       $sum: { $cond: [cond, field, 0] },
     });
     const isPaid = { $in: ['$status', [...PAID_STATUSES]] };
+    const { lowStockThreshold } = await getStoreSettings();
 
     const [
       totalProducts,
@@ -44,6 +45,7 @@ export const getDashboardStats = async (
       recentOrders,
       lowStockProducts,
       topProducts,
+      [counterToday],
     ] = await Promise.all([
       Product.countDocuments({ isActive: true }),
       Service.countDocuments({ isActive: true }),
@@ -75,7 +77,7 @@ export const getDashboardStats = async (
         .sort({ createdAt: -1 })
         .limit(5)
         .select('orderNumber customerName customerEmail total status createdAt'),
-      Product.find({ stockQuantity: { $lt: LOW_STOCK_THRESHOLD }, isActive: true })
+      Product.find({ stockQuantity: { $lte: lowStockThreshold }, isActive: true })
         .select('name stockQuantity unit')
         .sort({ stockQuantity: 1 })
         .limit(10),
@@ -85,6 +87,10 @@ export const getDashboardStats = async (
         { $group: { _id: '$items.productName', quantity: { $sum: '$items.quantity' }, revenue: { $sum: '$items.totalPrice' } } },
         { $sort: { revenue: -1 } },
         { $limit: 5 },
+      ]),
+      Bill.aggregate<{ count: number; sales: number }>([
+        { $match: { status: 'paid', createdAt: { $gte: startOfToday } } },
+        { $group: { _id: null, count: { $sum: 1 }, sales: { $sum: '$total' } } },
       ]),
     ]);
 
@@ -108,6 +114,9 @@ export const getDashboardStats = async (
         ordersChange: percentChange(o.currentOrders, o.previousOrders),
         todayOrders: o.todayOrders,
         todayRevenue: o.todayRevenue,
+        counterBillsToday: counterToday?.count || 0,
+        counterSalesToday: counterToday?.sales || 0,
+        lowStockThreshold,
         awaitingPayment: statusBreakdown.pending || 0,
         awaitingVerification: statusBreakdown.paid || 0,
         pendingEnquiries,

@@ -1,317 +1,175 @@
 .page {
-  padding-bottom: 0;
+  padding-bottom: 3rem;
 }
 
-/* ── Hero ── */
-.hero {
-  position: relative;
-  min-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.header {
+  padding: 2.5rem 0 1.75rem;
   background: var(--gradient-hero);
-  overflow: hidden;
 }
 
-.heroOverlay {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 30% 50%, rgba(232, 87, 29, 0.08) 0%, transparent 60%),
-              radial-gradient(ellipse at 70% 80%, rgba(245, 166, 35, 0.06) 0%, transparent 50%);
-}
-
-.heroContent {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: var(--space-16) 0 var(--space-12);
-}
-
-.heroBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-5);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--color-secondary);
-  background: rgba(245, 166, 35, 0.08);
-  border: 1px solid rgba(245, 166, 35, 0.15);
-  border-radius: var(--radius-full);
-  margin-bottom: var(--space-6);
-}
-
-.heroBadgePulse {
-  width: 8px;
-  height: 8px;
-  background: var(--color-secondary);
-  border-radius: 50%;
-  animation: pulse-glow 2s infinite;
-}
-
-.heroTitle {
-  font-size: var(--font-size-hero);
-  font-weight: 900;
-  color: var(--color-text-inverse);
-  line-height: 1.1;
-  margin-bottom: var(--space-6);
-}
-
-.typingLine {
-  display: inline-block;
-  min-height: 1.2em;
-}
-
-.typingText {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-size: 200% 200%;
-  animation: gradient-shift 4s ease infinite;
-}
-
-.typingCursor {
-  display: inline-block;
-  width: 4px;
-  height: 0.9em;
-  background: var(--color-secondary);
-  margin-left: 4px;
-  vertical-align: text-bottom;
-  animation: typing-cursor 0.7s step-end infinite;
-  border-radius: 2px;
-}
-
-.heroSubtitle {
-  font-size: var(--font-size-lg);
-  color: rgba(253, 250, 246, 0.6);
-  max-width: 650px;
-  margin: 0 auto;
-  line-height: 1.7;
-}
-
-/* ── Marquee ── */
-.marqueeWrapper {
-  overflow: hidden;
-  padding: var(--space-5) 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.marquee {
-  display: flex;
-  gap: var(--space-10);
-  animation: marquee 25s linear infinite;
-  white-space: nowrap;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-33.33%); }
-}
-
-.marqueeItem {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-family: var(--font-heading);
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: rgba(253, 250, 246, 0.15);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  flex-shrink: 0;
-}
-
-.marqueeIcon {
-  font-size: 1.2rem;
-}
-
-/* ── Process Steps ── */
-.processSection {
-  background: var(--color-bg);
-}
-
-.processGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-6);
-  position: relative;
-}
-
-.processCard {
-  position: relative;
-  text-align: center;
-  padding: var(--space-8) var(--space-5);
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-light);
-  transition: all var(--transition-base);
-}
-
-.processCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(232, 87, 29, 0.15);
-}
-
-.processStep {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: var(--space-1) var(--space-3);
-  font-family: var(--font-heading);
-  font-size: var(--font-size-xs);
+.title {
+  font-size: clamp(1.75rem, 4.5vw, 2.75rem);
   font-weight: 800;
-  color: white;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-full);
+  letter-spacing: -0.03em;
 }
 
-.processIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  font-size: 2rem;
-  background: rgba(232, 87, 29, 0.06);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--space-4);
-}
-
-.processCardTitle {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  margin-bottom: var(--space-2);
-}
-
-.processCardDesc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  line-height: 1.6;
-}
-
-.processConnector {
-  display: none;
-}
-
-/* ── Service Cards ── */
-.cardsSection {
-  background: var(--gradient-warm);
+.subtitle {
+  margin-top: 0.5rem;
+  max-width: 38rem;
+  color: var(--color-on-surface-variant);
 }
 
 .serviceGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-8);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  padding-top: 1.75rem;
 }
 
-/* ── CTA ── */
-.ctaSection {
-  background: var(--color-bg);
+.block {
+  padding-top: 2.5rem;
 }
 
-.ctaContent {
-  text-align: center;
-  max-width: 650px;
-  margin: 0 auto;
+.blockTitle {
+  margin-bottom: 1rem;
+  font-size: clamp(1.25rem, 3vw, 1.625rem);
+  font-weight: 800;
 }
 
-.ctaIcon {
-  font-size: 3rem;
-  margin-bottom: var(--space-4);
-  animation: bounce-subtle 2s ease-in-out infinite;
+/* ── How it works ── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+}
+
+.step strong {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.step small {
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+}
+
+.stepNum {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: #fff;
+  background: var(--gradient-primary);
+  border-radius: 50%;
+}
+
+/* ── Booking CTA ── */
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-lg);
 }
 
 .ctaTitle {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-3xl);
+  font-size: 1.125rem;
   font-weight: 800;
-  margin-bottom: var(--space-4);
 }
 
-.ctaDesc {
-  font-size: var(--font-size-base);
-  color: var(--color-text-muted);
-  line-height: 1.7;
-  margin-bottom: var(--space-8);
+.ctaText {
+  font-size: 0.875rem;
+  color: var(--color-on-surface-variant);
 }
 
 .ctaActions {
   display: flex;
+  gap: 0.625rem;
+}
+
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.ctaPrimaryBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-4) var(--space-8);
-  font-size: var(--font-size-base);
+  gap: 6px;
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
   font-weight: 700;
-  color: white;
+  border-radius: var(--radius-full);
+}
+
+.ctaPrimary {
+  color: #fff;
   background: var(--gradient-primary);
-  border-radius: var(--radius-full);
-  text-decoration: none;
-  transition: all var(--transition-base);
 }
 
-.ctaPrimaryBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+.ctaSecondary {
+  color: #15803d;
+  background: rgba(37, 211, 102, 0.14);
 }
 
-.ctaSecondaryBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-4) var(--space-8);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text);
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-full);
-  text-decoration: none;
-  transition: all var(--transition-base);
+.ctaPrimary :global(.material-symbols-outlined),
+.ctaSecondary :global(.material-symbols-outlined) {
+  font-size: 18px;
 }
 
-.ctaSecondaryBtn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  transform: translateY(-2px);
+@media (max-width: 900px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-@media (max-width: 1024px) {
-  .processGrid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 640px) {
+  .header {
+    padding: 1.5rem 0 1.25rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
   }
 
   .serviceGrid {
     grid-template-columns: 1fr;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-}
-
-@media (max-width: 768px) {
-  .heroTitle {
-    font-size: var(--font-size-4xl);
-  }
-}
-
-@media (max-width: 480px) {
-  .processGrid {
-    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
   }
 
-  .heroTitle {
-    font-size: var(--font-size-3xl);
+  .block {
+    padding-top: 2rem;
+  }
+
+  .step {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .cta {
+    padding: 1.125rem;
+  }
+
+  .ctaActions {
+    width: 100%;
+  }
+
+  .ctaActions > * {
+    flex: 1;
   }
 }

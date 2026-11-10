@@ -1,0 +1,54 @@
+.card {
+  padding: 1rem;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-lg);
+}
+
+.pills {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.pill {
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.pillActive {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.875rem;
+  text-align: center;
+}
+
+.results > div {
+  padding: 0.75rem 0.5rem;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+}
+
+.results dt {
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+}
+
+.results dd {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}

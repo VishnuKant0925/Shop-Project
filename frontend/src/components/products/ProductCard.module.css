@@ -210,9 +210,13 @@
     font-size: 0.9375rem;
   }
 
+  /* Grid cards on phones: photo, name, price, action (detail page has the description) */
   .desc {
-    font-size: var(--font-size-xs);
-    margin-bottom: var(--space-3);
+    display: none;
+  }
+
+  .name {
+    margin-bottom: var(--space-2);
   }
 
   .footer {

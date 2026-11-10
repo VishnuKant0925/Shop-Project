@@ -14,10 +14,7 @@ export default function FeaturedProducts() {
   return (
     <section className={styles.featuredSection} aria-labelledby="featured-heading">
       <div className={styles.featuredHeader}>
-        <div>
-          <span className={styles.pillarsAccent}>Fresh From The Mill</span>
-          <h2 id="featured-heading" className={styles.featuredTitle}>Shop Bestsellers</h2>
-        </div>
+        <h2 id="featured-heading" className={styles.featuredTitle}>Bestsellers</h2>
         <Link href="/products" className={styles.featuredAll}>
           View all
           <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>

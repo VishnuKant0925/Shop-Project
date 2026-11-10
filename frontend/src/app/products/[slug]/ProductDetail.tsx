@@ -11,11 +11,12 @@ import { Product } from '@/types';
 import styles from './page.module.css';
 
 const features = [
-  { icon: '🌿', label: '100% Natural & Pure' },
-  { icon: '🧪', label: 'Lab Tested Quality' },
-  { icon: '📦', label: 'Secure Packaging' },
-  { icon: '🏪', label: 'Pickup at the Mill' },
+  { icon: 'verified', label: '100% pure' },
+  { icon: 'science', label: 'Lab tested' },
+  { icon: 'storefront', label: 'Pickup at mill' },
 ];
+
+const LONG_DESCRIPTION = 180;
 
 interface ProductDetailProps {
   slug: string;
@@ -29,6 +30,7 @@ export default function ProductDetail({ slug, initialProduct }: ProductDetailPro
   const { addItem, getItemQuantity } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   if (!product) {
     return (
@@ -102,7 +104,14 @@ export default function ProductDetail({ slug, initialProduct }: ProductDetailPro
               {outOfStock ? 'Out of stock' : `In stock · ${product.stockQuantity} ${product.unit} available`}
             </div>
 
-            <p className={styles.description}>{product.description}</p>
+            <p className={`${styles.description} ${!showFullDescription && product.description.length > LONG_DESCRIPTION ? styles.descriptionClamped : ''}`}>
+              {product.description}
+            </p>
+            {product.description.length > LONG_DESCRIPTION && (
+              <button type="button" className={styles.readMore} onClick={() => setShowFullDescription((v) => !v)}>
+                {showFullDescription ? 'Show less' : 'Read more'}
+              </button>
+            )}
 
             {/* Quantity & Add to Cart (becomes a sticky bar on phones) */}
             <div className={styles.addSection}>
@@ -157,7 +166,8 @@ export default function ProductDetail({ slug, initialProduct }: ProductDetailPro
             <ul className={styles.features}>
               {features.map((f) => (
                 <li key={f.label} className={styles.featureItem}>
-                  <span aria-hidden="true">{f.icon}</span> {f.label}
+                  <span className="material-symbols-outlined" aria-hidden="true">{f.icon}</span>
+                  {f.label}
                 </li>
               ))}
             </ul>

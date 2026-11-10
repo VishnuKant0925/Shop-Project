@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from '@/lib/api';
+import { formatPhone, telHref, useSettings } from '@/context/SettingsContext';
 import styles from './page.module.css';
 
 export default function ContactPage() {
@@ -9,6 +10,9 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const { settings } = useSettings();
+  const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' +
+    encodeURIComponent(`${settings.storeName}, ${settings.address}`);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,69 +37,57 @@ export default function ContactPage() {
 
   return (
     <div className={styles.page}>
-      <section className={styles.hero}>
-        <div className="container">
-          <span className={styles.heroBadge}>Get In Touch</span>
-          <h1 className={styles.heroTitle}>Contact Us</h1>
-          <p className={styles.heroSubtitle}>
-            Questions about our products or services? We&apos;d love to hear from you.
-          </p>
-        </div>
-      </section>
+      <header className={`${styles.header} container`}>
+        <h1 className={styles.heroTitle}>Contact Us</h1>
+        <p className={styles.headerText}>Fastest: call or WhatsApp the mill. Open {settings.hours.replace(/^Mon\s*-\s*Sun:\s*/i, 'daily, ')}.</p>
+      </header>
 
       <section className={`${styles.contactSection} container`}>
         <div className={styles.contactGrid}>
-          {/* Contact Info */}
+          {/* Quick actions + details */}
           <div className={styles.infoSide}>
-            <h2 className={styles.infoTitle}>Let&apos;s Connect</h2>
-            <p className={styles.infoDesc}>
-              Visit our shop, call us, or fill out the form — no login required. We&apos;ll get back
-              to you as quickly as possible.
-            </p>
-
-            <div className={styles.infoCards}>
-              <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon} aria-hidden="true">📍</span>
-                <div>
-                  <h3>Visit Us</h3>
-                  <p>Vaishali Bus Stand Road,<br />Lalganj 844121, Vaishali, Bihar</p>
-                </div>
-              </div>
-
-              <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon} aria-hidden="true">📞</span>
-                <div>
-                  <h3>Call Us</h3>
-                  <p><a href="tel:+919934787476">+91 99347 87476</a></p>
-                  <p><a href="tel:+918226889960">+91 82268 89960</a></p>
-                  <small>Mon-Sun, 8AM - 9PM</small>
-                </div>
-              </div>
-
-              <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon} aria-hidden="true">✉️</span>
-                <div>
-                  <h3>Email Us</h3>
-                  <p><a href="mailto:asharfipandit844121@gmail.com">asharfipandit844121@gmail.com</a></p>
-                </div>
-              </div>
-
-              <div className={styles.infoCard}>
-                <span className={styles.infoCardIcon} aria-hidden="true">💬</span>
-                <div>
-                  <h3>WhatsApp</h3>
-                  <p><a href="https://wa.me/919934787476" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>
-                  <small>Quick responses!</small>
-                </div>
-              </div>
+            <div className={styles.quickActions}>
+              <a href={telHref(settings.phones[0] || '')} className={styles.quickPrimary}>
+                <span className="material-symbols-outlined" aria-hidden="true">call</span>
+                Call
+              </a>
+              <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noopener noreferrer" className={styles.quickAction}>
+                <span className="material-symbols-outlined" aria-hidden="true">chat</span>
+                WhatsApp
+              </a>
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.quickAction}>
+                <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+                Directions
+              </a>
             </div>
+
+            <dl className={styles.details}>
+              <div>
+                <dt>Address</dt>
+                <dd>{settings.address}</dd>
+              </div>
+              <div>
+                <dt>Phone</dt>
+                <dd>
+                  {settings.phones.map((p, i) => (
+                    <React.Fragment key={p}>
+                      {i > 0 && ' · '}
+                      <a href={telHref(p)}>{formatPhone(p)}</a>
+                    </React.Fragment>
+                  ))}
+                </dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd><a href={`mailto:${settings.email}`}>{settings.email}</a></dd>
+              </div>
+            </dl>
           </div>
 
           {/* Form */}
           <div className={styles.formSide}>
             <form className={styles.form} onSubmit={handleSubmit}>
               <h3 className={styles.formTitle}>Request a Callback</h3>
-              <p className={styles.formSubtitle}>No account needed — just fill in your details.</p>
 
               {submitted ? (
                 <div className={styles.success} role="status">

@@ -7,6 +7,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useProductCatalog } from '@/context/ProductCatalogContext';
 import { api } from '@/lib/api';
+import { downloadBillPdf, orderToDocument } from '@/lib/billPdf';
+import { useSettings } from '@/context/SettingsContext';
 import { Order } from '@/types';
 import styles from './page.module.css';
 
@@ -57,6 +59,7 @@ export default function OrderHistoryPage() {
   const [notice, setNotice] = useState('');
   const { addItem } = useCart();
   const { products } = useProductCatalog();
+  const { settings } = useSettings();
 
   const handleCancel = async (order: Order) => {
     if (!window.confirm(`Cancel order ${order.orderNumber}?`)) return;
@@ -257,6 +260,11 @@ export default function OrderHistoryPage() {
                       {order.status !== 'pending' && (
                         <button type="button" className={styles.buyAgainBtn} onClick={() => handleBuyAgain(order)}>
                           Buy again
+                        </button>
+                      )}
+                      {order.status !== 'pending' && order.status !== 'cancelled' && (
+                        <button type="button" className={styles.buyAgainBtn} onClick={() => void downloadBillPdf(orderToDocument(order), settings)}>
+                          Download invoice
                         </button>
                       )}
                     </div>

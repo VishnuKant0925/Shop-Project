@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { services as fallbackServices } from '@/data';
 import { getActiveServices } from '@/lib/serverApi';
 import ServiceCard from '@/components/services/ServiceCard';
-import TypingText from './TypingText';
+import YieldCalculator from './YieldCalculator';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -13,19 +12,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/services' },
 };
 
-const serviceWords = [
-  'Mustard Oil Milling',
-  'Flour Milling',
-  'Poha Milling',
-  'Traditional Grinding',
-  'Custom Processing',
-];
-
-const processSteps = [
-  { step: '01', icon: '📞', title: 'Contact Us', desc: 'Call us or visit our mill with your raw materials.' },
-  { step: '02', icon: '⚖️', title: 'Weigh & Inspect', desc: 'We weigh your material and check quality.' },
-  { step: '03', icon: '⚙️', title: 'Fresh Milling', desc: 'Your material is processed fresh using traditional methods.' },
-  { step: '04', icon: '📦', title: 'Collect & Pay', desc: 'Collect your fresh product and pay the milling rate.' },
+const steps = [
+  { title: 'Bring your harvest', desc: 'Visit the mill or call ahead' },
+  { title: 'Weigh it', desc: 'On Govt-stamped scales' },
+  { title: 'We mill it', desc: 'Fresh, in front of you' },
+  { title: 'Collect & pay', desc: 'Pay only the milling rate' },
 ];
 
 export default async function ServicesPage() {
@@ -35,94 +26,55 @@ export default async function ServicesPage() {
 
   return (
     <div className={styles.page}>
-      {/* Hero Section with Animated Text */}
-      <section className={styles.hero}>
-        <div className={styles.heroOverlay} />
-        <div className={`${styles.heroContent} container`}>
-          <span className={styles.heroBadge}>
-            <span className={styles.heroBadgePulse} />
-            Our Milling Services
-          </span>
-
-          <h1 className={styles.heroTitle}>
-            We Offer
-            <br />
-            <TypingText words={serviceWords} />
-            <span className="sr-only">Mustard Oil Expelling, Atta Chakki Flour Milling &amp; Poha Milling</span>
-          </h1>
-
-          <p className={styles.heroSubtitle}>
-            Bring your own grains, seeds, or rice — we transform them into fresh, pure products
-            using traditional methods passed down through generations.
-          </p>
+      <header className={styles.header}>
+        <div className="container">
+          <h1 className={styles.title}>Milling Services</h1>
+          <p className={styles.subtitle}>Bring your own seeds, grain or spices — we process them fresh at fair per-kg rates.</p>
         </div>
+      </header>
 
-        {/* Scrolling marquee */}
-        <div className={styles.marqueeWrapper}>
-          <div className={styles.marquee} aria-hidden="true">
-            {[...serviceWords, ...serviceWords, ...serviceWords].map((word, idx) => (
-              <span key={idx} className={styles.marqueeItem}>
-                <span className={styles.marqueeIcon}>⚙️</span>
-                {word}
+      <section className="container" aria-label="Services and rates">
+        <div className={styles.serviceGrid}>
+          {services.map((service) => (
+            <ServiceCard key={service.id} service={service} />
+          ))}
+        </div>
+      </section>
+
+      <section className={`container ${styles.block}`} aria-labelledby="how-heading">
+        <h2 id="how-heading" className={styles.blockTitle}>How it works</h2>
+        <ol className={styles.steps}>
+          {steps.map((s, i) => (
+            <li key={s.title} className={styles.step}>
+              <span className={styles.stepNum}>{i + 1}</span>
+              <span>
+                <strong>{s.title}</strong>
+                <small>{s.desc}</small>
               </span>
-            ))}
-          </div>
-        </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
-      {/* Services Process Steps */}
-      <section className={`section ${styles.processSection}`}>
-        <div className="container">
-          <span className="section-accent">How It Works</span>
-          <h2 className="section-title">Simple 4-Step Process</h2>
-          <p className="section-subtitle">Getting your milling done is easy and hassle-free</p>
-
-          <div className={styles.processGrid}>
-            {processSteps.map((item, idx) => (
-              <div key={idx} className={styles.processCard}>
-                <div className={styles.processStep}>{item.step}</div>
-                <span className={styles.processIcon} aria-hidden="true">{item.icon}</span>
-                <h3 className={styles.processCardTitle}>{item.title}</h3>
-                <p className={styles.processCardDesc}>{item.desc}</p>
-                {idx < 3 && <div className={styles.processConnector} />}
-              </div>
-            ))}
-          </div>
-        </div>
+      <section className={`container ${styles.block}`} aria-labelledby="calc-heading">
+        <h2 id="calc-heading" className={styles.blockTitle}>Mustard oil yield estimate</h2>
+        <YieldCalculator />
       </section>
 
-      {/* Service Cards */}
-      <section className={`section ${styles.cardsSection}`}>
-        <div className="container">
-          <span className="section-accent">Our Services</span>
-          <h2 className="section-title">Available Milling Services</h2>
-          <p className="section-subtitle">
-            Each service uses time-tested traditional techniques for the best results.
-          </p>
-
-          <div className={styles.serviceGrid}>
-            {services.map((service, idx) => (
-              <ServiceCard key={service.id} service={service} index={idx} />
-            ))}
+      <section className={`container ${styles.block}`}>
+        <div className={styles.cta}>
+          <div>
+            <h2 className={styles.ctaTitle}>Want to book a slot?</h2>
+            <p className={styles.ctaText}>No registration needed — just call or walk in.</p>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className={`section ${styles.ctaSection}`}>
-        <div className={`${styles.ctaContent} container`}>
-          <div className={styles.ctaIcon}>🌾</div>
-          <h2 className={styles.ctaTitle}>Ready to Get Your Milling Done?</h2>
-          <p className={styles.ctaDesc}>
-            Visit us with your raw materials or call us to schedule your milling appointment.
-            No registration required!
-          </p>
           <div className={styles.ctaActions}>
-            <Link href="/contact" className={styles.ctaPrimaryBtn}>
-              Request Callback
-            </Link>
-            <a href="tel:+919934787476" className={styles.ctaSecondaryBtn}>
-              📞 Call Now
+            <a href="tel:+919934787476" className={styles.ctaPrimary}>
+              <span className="material-symbols-outlined" aria-hidden="true">call</span>
+              Call mill
+            </a>
+            <a href="https://wa.me/919934787476" target="_blank" rel="noopener noreferrer" className={styles.ctaSecondary}>
+              <span className="material-symbols-outlined" aria-hidden="true">chat</span>
+              WhatsApp
             </a>
           </div>
         </div>

@@ -164,8 +164,8 @@ export default function AdminDashboard() {
             <span>🔄</span>
             <span>{refreshing ? 'Syncing...' : 'Sync Data'}</span>
           </button>
-          <Link href="/admin/products" className={styles.newProductBtn}>
-            <span>+</span> Add Product
+          <Link href="/admin/billing" className={styles.newProductBtn}>
+            <span>+</span> New Bill
           </Link>
         </div>
       </div>
@@ -195,6 +195,7 @@ export default function AdminDashboard() {
       <div className={ui.list} style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {[
           { label: 'Today', value: `${stats.todayOrders ?? 0} orders · ${formatCurrency(stats.todayRevenue ?? 0)}`, href: '/admin/orders' },
+          { label: 'Counter sales today', value: `${stats.counterBillsToday ?? 0} bills · ${formatCurrency(stats.counterSalesToday ?? 0)}`, href: '/admin/bills' },
           { label: 'Payments to verify', value: String(stats.awaitingVerification ?? 0), href: '/admin/orders' },
           { label: 'Awaiting payment', value: String(stats.awaitingPayment ?? 0), href: '/admin/orders' },
           { label: 'New enquiries', value: String(stats.pendingEnquiries ?? 0), href: '/admin/enquiries' },

@@ -118,6 +118,19 @@ export default function AdminSettingsPage() {
               onChange={(e) => set('taxRate', Number(e.target.value))}
             />
           </div>
+          <div className={styles.field}>
+            <label htmlFor="gstin">GSTIN (printed on bills)</label>
+            <input id="gstin" value={form.gstin} maxLength={15} placeholder="Optional" onChange={(e) => set('gstin', e.target.value.toUpperCase())} />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="fssai">FSSAI licence no.</label>
+            <input id="fssai" value={form.fssaiLicense} maxLength={20} onChange={(e) => set('fssaiLicense', e.target.value)} />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="lowStock">Low-stock alert at</label>
+            <input id="lowStock" type="number" min={0} step={1} value={form.lowStockThreshold} onChange={(e) => set('lowStockThreshold', Number(e.target.value))} />
+            <span className={styles.hint}>Products at or below this quantity are flagged.</span>
+          </div>
         </div>
       </section>
 

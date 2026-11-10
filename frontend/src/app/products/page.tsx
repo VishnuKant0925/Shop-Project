@@ -1,15 +1,28 @@
 'use client';
 
-import React, { useDeferredValue, useMemo, useState } from 'react';
+import React, { Suspense, useDeferredValue, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/products/ProductCard';
 import { useProductCatalog } from '@/context/ProductCatalogContext';
 import styles from './page.module.css';
 
 type SortOption = 'default' | 'price-low' | 'price-high';
 
+// useSearchParams needs a Suspense boundary so the page can still be prerendered.
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <Store />
+    </Suspense>
+  );
+}
+
+function Store() {
   const { products, categories, isLoading, error, refreshCatalog } = useProductCatalog();
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Home page category tiles link here as /products?category=<slug>
+  const urlCategory = useSearchParams().get('category');
+  const [pickedCategory, setSelectedCategory] = useState<string | null>(null);
+  const selectedCategory = pickedCategory ?? categories.find((c) => c.slug === urlCategory)?.id ?? 'all';
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const deferredQuery = useDeferredValue(searchQuery);
@@ -33,16 +46,7 @@ export default function ProductsPage() {
 
   return (
     <div className={styles.page}>
-      {/* Hero Banner */}
-      <section className={styles.hero}>
-        <div className="container">
-          <span className={styles.heroBadge}>Direct From The Mill</span>
-          <h1 className={styles.heroTitle}>Shop Pure Oils &amp; Spices</h1>
-          <p className={styles.heroSubtitle}>
-            Cold-pressed Kachi Ghani mustard oil and stone-ground masalas — milled fresh, priced fair.
-          </p>
-        </div>
-      </section>
+      <h1 className={`${styles.heroTitle} container`}>Shop</h1>
 
       {/* Filters (sticky under the header) */}
       <div className={styles.filtersBar}>

@@ -6,90 +6,68 @@ import Image from 'next/image';
 import { formatPhone, telHref, useSettings } from '@/context/SettingsContext';
 import styles from './Footer.module.css';
 
+const links = [
+  { href: '/products', label: 'Store' },
+  { href: '/products/mustard-oil', label: 'Mustard Oil' },
+  { href: '/products/turmeric-powder', label: 'Turmeric' },
+  { href: '/products/red-chili-powder', label: 'Chilli Powder' },
+  { href: '/services', label: 'Milling Services' },
+  { href: '/contact', label: 'Contact' },
+];
+
+/** Compact footer: who we are, three one-tap actions, key links. */
 export default function Footer() {
   const { settings } = useSettings();
   const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' +
     encodeURIComponent(`${settings.storeName}, ${settings.address}`);
+  const primaryPhone = settings.phones[0];
 
   return (
     <footer className={styles.footer}>
-      <div className={styles.footerInner}>
-        <div className={styles.footerGrid}>
-          {/* Col 1: Brand Info */}
-          <div className={styles.brandCol}>
-            <div className={styles.brandRow}>
-              <div className={styles.brandLogoBox}>
-                <Image
-                  src="/images/logo.jpeg"
-                  alt=""
-                  width={32}
-                  height={32}
-                  className={styles.brandLogoImg}
-                />
-              </div>
-              <span className={styles.brandColName}>New Pandit Mill</span>
-            </div>
-            <p className={styles.brandDesc}>
-              High-quality filtered cold-pressed oil and slow stone-ground spices since 1984. Zero adulteration guarantee.
-            </p>
-            <span className={styles.fssaiBadge}>
-              FSSAI Lic. #10023948000122
+      <div className={styles.inner}>
+        <div className={styles.top}>
+          <div className={styles.brand}>
+            <span className={styles.logo}>
+              <Image src="/images/logo.jpeg" alt="" width={36} height={36} />
             </span>
+            <div>
+              <strong className={styles.brandName}>New Pandit Masala &amp; Tel Mill</strong>
+              <span className={styles.meta}>Since 1984 · FSSAI Lic. 10023948000122</span>
+            </div>
           </div>
 
-          {/* Col 2: Products */}
-          <nav className={styles.footerCol} aria-label="Products">
-            <h2 className={styles.colTitle}>Our Pure Products</h2>
-            <ul className={styles.colLinks}>
-              <li><Link href="/products/mustard-oil">Kachi Ghani Mustard Oil</Link></li>
-              <li><Link href="/products/turmeric-powder">Stone-Ground Turmeric Powder</Link></li>
-              <li><Link href="/products/red-chili-powder">Red Chilli Powder</Link></li>
-              <li><Link href="/products/coriander-powder">Coriander Powder</Link></li>
-              <li><Link href="/services">Custom Milling Services</Link></li>
-            </ul>
-          </nav>
-
-          {/* Col 3: Mill Yard & Hours */}
-          <div className={styles.footerCol}>
-            <h2 className={styles.colTitle}>Mill Yard &amp; Hours</h2>
-            <address className={styles.colText}>
-              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.inlineLink}>
-                {settings.address}
+          <div className={styles.actions}>
+            {primaryPhone && (
+              <a href={telHref(primaryPhone)} className={styles.action}>
+                <span className="material-symbols-outlined" aria-hidden="true">call</span>
+                <span className={styles.wideOnly}>{formatPhone(primaryPhone)}</span>
+                <span className={styles.narrowOnly}>Call</span>
               </a>
-            </address>
-            <p className={styles.colTextBold}>{settings.hours}</p>
-          </div>
-
-          {/* Col 4: Contact */}
-          <div className={styles.footerCol}>
-            <h2 className={styles.colTitle}>Direct Helpdesk</h2>
-            {settings.phones.map((phone) => (
-              <a key={phone} href={telHref(phone)} className={styles.colPhone}>{formatPhone(phone)}</a>
-            ))}
-            <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
-              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '16px' }}>chat</span>
-              Chat on WhatsApp
+            )}
+            <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noopener noreferrer" className={styles.action}>
+              <span className="material-symbols-outlined" aria-hidden="true">chat</span>
+              <span>WhatsApp</span>
             </a>
-            <p className={styles.colText}>
-              Speak directly to the mill manager for live rate enquiries.
-            </p>
-            <Link href="/auth/login" className={styles.erpLink}>
-              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '15px' }}>lock</span>
-              <span>Operator &amp; Staff Login</span>
-            </Link>
+            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.action}>
+              <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+              <span>Directions</span>
+            </a>
           </div>
         </div>
 
-        {/* Copyright Bar */}
-        <div className={styles.copyright}>
-          <p>© {new Date().getFullYear()} New Pandit Masala &amp; Tel Mill. All Rights Reserved.</p>
-          <div className={styles.copyrightLinks}>
-            <Link href="/products">Store</Link>
-            <span aria-hidden="true">•</span>
-            <Link href="/services">Services</Link>
-            <span aria-hidden="true">•</span>
-            <Link href="/contact">Contact</Link>
-          </div>
+        <p className={styles.address}>
+          {settings.address} · {settings.hours}
+        </p>
+
+        <nav aria-label="Footer" className={styles.links}>
+          {links.map((l) => (
+            <Link key={l.href} href={l.href}>{l.label}</Link>
+          ))}
+        </nav>
+
+        <div className={styles.bottom}>
+          <span>© {new Date().getFullYear()} New Pandit Masala &amp; Tel Mill</span>
+          <Link href="/auth/login" className={styles.staff}>Staff login</Link>
         </div>
       </div>
     </footer>

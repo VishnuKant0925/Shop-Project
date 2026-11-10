@@ -226,7 +226,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div className={styles.inputGroup}>
                   <label htmlFor="product-stock">Stock Quantity</label>
-                  <input id="product-stock" type="number" min="0" value={form.stockQuantity} onChange={(event) => setForm({ ...form, stockQuantity: event.target.value })} required disabled={isSaving} />
+                  <input id="product-stock" type="number" min="0" step="0.01" value={form.stockQuantity} onChange={(event) => setForm({ ...form, stockQuantity: event.target.value })} required disabled={isSaving} />
                 </div>
               </div>
               <div className={styles.formRow}>

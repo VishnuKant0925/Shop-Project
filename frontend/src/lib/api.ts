@@ -1,4 +1,4 @@
-import { Product, Service, Category, Order, User, CallbackRequest, CallbackItem, Coupon, StoreSettings } from '@/types';
+import { Product, Service, Category, Order, User, CallbackRequest, CallbackItem, Coupon, StoreSettings, Bill, NewBillInput, StockMovement, StockReason } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.newpanditmasala.shop/api';
 
@@ -50,6 +50,9 @@ export interface DashboardStats {
   revenueChange: string;
   ordersChange: string;
   todayOrders?: number;
+  counterBillsToday?: number;
+  counterSalesToday?: number;
+  lowStockThreshold?: number;
   todayRevenue?: number;
   awaitingPayment?: number;
   awaitingVerification?: number;
@@ -574,6 +577,43 @@ class ApiClient {
 
   async deleteCallback(id: string): Promise<void> {
     await this.request<ApiResponse>(`/callbacks/${id}`, { method: 'DELETE' });
+  }
+
+  // Counter billing (admin)
+  async createBill(data: NewBillInput): Promise<Bill> {
+    const res = await this.request<DataResponse<Bill>>('/bills', { method: 'POST', body: JSON.stringify(data) });
+    return res.data;
+  }
+
+  async getBills(params: { q?: string; from?: string; to?: string; status?: string; page?: number } = {}): Promise<Paginated<Bill> & { summary: { count: number; sales: number; discount: number } }> {
+    const query = new URLSearchParams();
+    if (params.q?.trim()) query.append('q', params.q.trim());
+    if (params.from) query.append('from', params.from);
+    if (params.to) query.append('to', params.to);
+    if (params.status && params.status !== 'all') query.append('status', params.status);
+    query.append('page', String(params.page || 1));
+    return this.request(`/bills?${query}`);
+  }
+
+  async voidBill(id: string, reason: string): Promise<Bill> {
+    const res = await this.request<DataResponse<Bill>>(`/bills/${id}/void`, { method: 'POST', body: JSON.stringify({ reason }) });
+    return res.data;
+  }
+
+  // Inventory (admin)
+  async adjustStock(productId: string, data: { reason: Extract<StockReason, 'restock' | 'wastage' | 'correction'>; quantity?: number; setTo?: number; note?: string }): Promise<{ id: string; stockQuantity: number }> {
+    const res = await this.request<DataResponse<{ id: string; stockQuantity: number }>>(`/inventory/products/${productId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return res.data;
+  }
+
+  async getStockMovements(params: { product?: string; page?: number } = {}): Promise<Paginated<StockMovement>> {
+    const query = new URLSearchParams();
+    if (params.product) query.append('product', params.product);
+    query.append('page', String(params.page || 1));
+    return this.request(`/inventory/movements?${query}`);
   }
 
   // Notifications

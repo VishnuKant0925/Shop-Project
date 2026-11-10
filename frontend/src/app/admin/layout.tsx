@@ -9,8 +9,11 @@ import styles from './layout.module.css';
 
 const navItems = [
   { href: '/admin', icon: '📊', label: 'Dashboard', badge: null },
-  { href: '/admin/products', icon: '📦', label: 'Products & Stock', badge: null },
-  { href: '/admin/orders', icon: '🛒', label: 'Customer Orders', badge: null },
+  { href: '/admin/billing', icon: '🧾', label: 'Billing Counter', badge: null },
+  { href: '/admin/bills', icon: '📑', label: 'Bills', badge: null },
+  { href: '/admin/orders', icon: '🛒', label: 'Online Orders', badge: null },
+  { href: '/admin/products', icon: '📦', label: 'Products & Prices', badge: null },
+  { href: '/admin/inventory', icon: '📈', label: 'Inventory', badge: null },
   { href: '/admin/services', icon: '⚙️', label: 'Mill Services', badge: null },
   { href: '/admin/customers', icon: '👥', label: 'Customers & CRM', badge: null },
   { href: '/admin/enquiries', icon: '📞', label: 'Enquiries', badge: null },
@@ -61,7 +64,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const getPageTitle = () => {
     if (pathname === '/admin') return 'Dashboard Overview';
-    if (pathname.startsWith('/admin/products')) return 'Product & Inventory Management';
+    if (pathname.startsWith('/admin/billing')) return 'Billing Counter';
+    if (pathname.startsWith('/admin/bills')) return 'Bill History';
+    if (pathname.startsWith('/admin/inventory')) return 'Inventory & Stock';
+    if (pathname.startsWith('/admin/products')) return 'Products & Prices';
     if (pathname.startsWith('/admin/orders')) return 'Order Fulfillment & Review';
     if (pathname.startsWith('/admin/services')) return 'Milling & Expelling Services';
     if (pathname.startsWith('/admin/customers')) return 'Customer Directory & CRM';

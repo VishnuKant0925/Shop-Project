@@ -16,6 +16,9 @@ export interface ISettings extends Document {
   upiId: string;
   upiName: string;
   taxRate: number;
+  gstin: string;
+  fssaiLicense: string;
+  lowStockThreshold: number;
   acceptingOrders: boolean;
   closedMessage: string;
   announcement: string;
@@ -44,6 +47,11 @@ const SettingsSchema = new Schema<ISettings>(
     upiId: { type: String, default: '6205372825@axl', trim: true },
     upiName: { type: String, default: 'New Pandit Masala Tel Mill', trim: true },
     taxRate: { type: Number, default: 5, min: 0, max: 28 },
+    // Printed on bills when set
+    gstin: { type: String, default: '', trim: true, uppercase: true, maxlength: 15 },
+    fssaiLicense: { type: String, default: '10023948000122', trim: true, maxlength: 20 },
+    // Products at or below this stock are flagged on the dashboard and inventory page
+    lowStockThreshold: { type: Number, default: 10, min: 0 },
     acceptingOrders: { type: Boolean, default: true },
     closedMessage: {
       type: String,

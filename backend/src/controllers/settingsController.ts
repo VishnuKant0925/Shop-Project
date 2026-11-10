@@ -5,7 +5,7 @@ import { emitSettingsChanged } from '../realtime';
 
 const EDITABLE = [
   'storeName', 'phones', 'whatsapp', 'email', 'address', 'hours', 'upiId', 'upiName',
-  'taxRate', 'acceptingOrders', 'closedMessage', 'announcement', 'millRates',
+  'taxRate', 'gstin', 'fssaiLicense', 'lowStockThreshold', 'acceptingOrders', 'closedMessage', 'announcement', 'millRates',
 ] as const;
 
 /* ── Public: store details used by the storefront (checkout UPI, rates ticker, banner) ── */
@@ -37,6 +37,7 @@ export const updateSettings = async (req: Request, res: Response, next: NextFunc
         .slice(0, 12);
     }
     if (data.taxRate !== undefined) data.taxRate = Number(data.taxRate);
+    if (data.lowStockThreshold !== undefined) data.lowStockThreshold = Math.max(0, Number(data.lowStockThreshold) || 0);
     if (data.acceptingOrders !== undefined) data.acceptingOrders = Boolean(data.acceptingOrders);
 
     const settings = await getStoreSettings();

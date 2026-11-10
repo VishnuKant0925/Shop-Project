@@ -20,6 +20,8 @@ import uploadRoutes from './routes/uploadRoutes';
 import customerRoutes from './routes/customerRoutes';
 import couponRoutes from './routes/couponRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import billRoutes from './routes/billRoutes';
+import inventoryRoutes from './routes/inventoryRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 export const createApp = (): Application => {
@@ -84,6 +86,8 @@ export const createApp = (): Application => {
   app.use('/api/customers', customerRoutes);
   app.use('/api/coupons', couponRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/bills', billRoutes);
+  app.use('/api/inventory', inventoryRoutes);
 
   // 404 Route Handler
   app.use((_req: Request, res: Response) => {

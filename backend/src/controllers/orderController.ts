@@ -11,6 +11,7 @@ import { sendOrderReadyEmail } from '../services/emailService';
 import { notifyAdmins, notifyUser } from '../services/notify';
 import { emitOrderStatusChanged, emitProductsChanged } from '../realtime';
 import { parsePagination, searchRegex } from '../utils/helpers';
+import { logStockMovements } from '../services/stock';
 
 const ORDER_STATUSES: OrderStatus[] = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled'];
 const MAX_LINE_ITEMS = 50;
@@ -36,7 +37,12 @@ const restoreStock = async (order: IOrder): Promise<void> => {
     .map((item) => ({
       updateOne: { filter: { _id: item.productId }, update: { $inc: { stockQuantity: item.quantity } } },
     }));
-  if (ops.length > 0) await Product.bulkWrite(ops);
+  if (ops.length > 0) {
+    await Product.bulkWrite(ops);
+    void logStockMovements(order.items
+      .filter((item) => mongoose.Types.ObjectId.isValid(item.productId))
+      .map((item) => ({ productId: item.productId, change: item.quantity, reason: 'order_cancelled' as const, reference: order.orderNumber })));
+  }
   if (order.couponCode) {
     await Coupon.updateOne({ code: order.couponCode, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
   }
@@ -204,6 +210,13 @@ export const createOrder = async (
     }
 
     emitProductsChanged();
+    void logStockMovements(reserved.map((r) => ({
+      productId: r.productId,
+      change: -r.quantity,
+      reason: 'online_order' as const,
+      reference: order.orderNumber,
+      userId: req.user?._id,
+    })));
     void notifyAdmins(
       'new_order',
       'New Order Received',

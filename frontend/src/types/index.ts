@@ -104,6 +104,9 @@ export interface StoreSettings {
   upiId: string;
   upiName: string;
   taxRate: number;
+  gstin: string;
+  fssaiLicense: string;
+  lowStockThreshold: number;
   acceptingOrders: boolean;
   closedMessage: string;
   announcement: string;
@@ -123,4 +126,60 @@ export interface Coupon {
   usedCount: number;
   isActive: boolean;
   createdAt?: string;
+}
+
+export interface BillItem {
+  productId?: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+}
+
+export type PaymentMode = 'cash' | 'upi' | 'card' | 'credit';
+
+export interface Bill {
+  id: string;
+  billNumber: string;
+  items: BillItem[];
+  subtotal: number;
+  discountType: 'percent' | 'flat' | 'none';
+  discountValue: number;
+  discount: number;
+  taxRate: number;
+  tax: number;
+  total: number;
+  customerName: string;
+  customerPhone: string;
+  paymentMode: PaymentMode;
+  notes: string;
+  status: 'paid' | 'void';
+  voidReason?: string;
+  createdAt: string;
+}
+
+export interface NewBillInput {
+  items: { productId?: string; name?: string; unit?: string; quantity: number; rate?: number }[];
+  discountType: 'percent' | 'flat' | 'none';
+  discountValue: number;
+  taxRate?: number;
+  customerName?: string;
+  customerPhone?: string;
+  paymentMode: PaymentMode;
+  notes?: string;
+}
+
+export type StockReason = 'online_order' | 'order_cancelled' | 'counter_bill' | 'bill_void' | 'restock' | 'wastage' | 'correction';
+
+export interface StockMovement {
+  id: string;
+  product: string;
+  productName: string;
+  change: number;
+  balanceAfter: number | null;
+  reason: StockReason;
+  reference: string;
+  note: string;
+  createdAt: string;
 }
